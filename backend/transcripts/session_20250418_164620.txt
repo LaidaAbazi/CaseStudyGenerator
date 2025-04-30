@@ -1,0 +1,63 @@
+AI: Hello there! Thanks for joining me today. Let's start with a quick introduction. Could you tell me your name, the company you're representing, and your role there? I'd also love to hear about the project you have in mind for our case study journey. And, if you could also share the industry your company operates in, that would be great. Once we've got all that, we'll dive right into the details together. "Sorry about that, could you repeat that
+USER: Оу-оу-оу-оу-оу, Котольня. Wspomnieliśmy.
+AI: Hello, it seems like there might
+USER: Folk... Yours. Hello! My name is Lajda Abozi, I work at Borax Solution Group.
+AI: Great to meet you, Yaida! Thanks for joining today. Let's start by learning a little more about your role at Barak Solution Group. What do you do there?
+USER: What do you do? Love you. I work at Borax Solution Group as an AI developer.
+AI: An AI Developer, that's fantastic! And what project would you like to generate a case study for today?
+USER: Bye.
+AI: That's fantastic, Yaida. AI development is such an exciting field. Now, can you tell me about the project you'd like to discuss today? What was it all about, and what was the name of the project?
+USER: Um... Oh.
+AI: No worries, take your time. What's the name of the project you're planning to talk about? It's all good. Whenever you're ready, just let me know the name of the project.
+USER: Um... Okay. 그럼 나는 로즈홀리데이 Tick. The name of the project is Key Study Jam.
+AI: Great, Case Study Gen sounds intriguing. Now, let’s set the scene a bit. Who was the client you worked with on this project, and what industry are they in?
+USER: The client was a duck.
+AI: Got it, your client was a telecom company. Can you share a little about what specific challenges or needs they had that brought them to you for this project?
+USER: No, no, no, no, no. My client's name was... That cured
+AI: Got it, TechYard. Thanks for clarifying. And what kind of industry does TechYard operate in?
+USER: Operation... technology industry.
+AI: Wonderful. Now, what brought TechYard to you? What challenges or needs were they facing before you stepped in?
+USER: OK.
+AI: Take your time. What were the specific issues TechYard was dealing with that led them to seek your help?
+USER: Um...
+AI: Whenever you're ready, just share what challenges or needs TechYard was facing before your project began.
+USER: Okay.
+AI: No rush. Let me know when you're ready to continue. What challenges or problems was TechYard facing before they came to you for a solution?
+USER: OK. Okay, okay. I understand the question now, just let me explain. Um
+AI: Absolutely, go ahead. I'm all ears and ready to hear about the challenges TechYard was facing.
+USER: that QRDIS was facing about spending too much time to create case study documents. and they seek it. for a prose that's going to automate this. without human. interaction with faster and not taking too much time and too much energy.
+AI: Got it. Tech
+USER: and to reduce the manual work on it. good quality case study done. documents.
+AI: Got it, TechYard needed to streamline their case study creation process, aiming to automate the task, cut down on time and effort, and ensure high-quality results with minimal manual work. So, how did you and your team step in to help them?
+USER: Yes.
+AI: Got it. So, they were looking for a way to automate case study creation to save time and energy while maintaining quality. Now, let's move on to your solution. What did you and your team at Barak Solution Group do to help TechYard with this issue?
+USER: Okay, we thought that. What... What is the solution that can help that? to be automated without human interaction and without manual work. So we created an AI tool. that are going to generate case study documents. by doing a 10-minute interview.
+AI: That sounds like a smart solution.
+USER: um Wait, just let me... finish please doing a 10 minute interview. and then after a 10 minute interview with our AI voice agent They're going to have a perfect professional case study. document.
+AI: That sounds like a really innovative solution! Creating an AI tool that conducts a 10-minute interview and then generates a polished case study document is a great way to save time and reduce manual effort. What do you think made your solution the perfect fit for TechYard?
+USER: Bye. Exactly.
+AI: That sounds like a brilliant solution. Creating a professional case study document from just a 10-minute interview is impressive. What made your AI tool the right fit for TechYard's needs?
+USER: it made because they needed to reduce the manual work and now the manual work is reduced. at 80-85% They wanted to save time, now they can create a case study that they created from 2 to 10 days. Now they can create it only by 10 minutes. Um...
+AI: That's a significant
+USER: of course that they meet their needs and goals.
+AI: Absolutely, meeting their needs and goals so effectively is a big achievement. Reducing manual work by 85% and cutting down the time to create a case study from days to just 10 minutes is impressive. Now, let's talk about the implementation. How did the rollout of your AI tool go for TechYard?
+USER: Yes, yes.
+AI: Excellent. Now, let's move on to the implementation. How did the rollout of your AI tool go at TechYard? Was there an onboarding phase, and who was involved in making it a success?
+USER: I'm... Yes, it took us six months. On board was AI developers. software developers, UI UX designers. to create this application. Um...
+AI: It sounds like a well-rounded team effort. Was there anyone from TechYard involved in the process, or was it mainly your team leading the implementation?
+USER: Mm-hmm. Yes
+AI: And was there any specific challenge or surprise that came up during the rollout? How did your team handle that?
+USER: Maybe to train, or to instruct. the RAI voice agent. Good to make like good question and the flow of the conversation, it was really difficult to... do it human-like.
+AI: Ensuring the AI voice agent was human-like must have been a unique challenge. It sounds like you overcame it well. What kind of results or improvements did TechYard see after implementing your solution?
+USER: Yes, they saw that. they saved so much time. and they don't have to... really make work many. uh, workers. to create that, so it can be created only by AI. So yes, and they got many clients and their clients are so happy with the quality of case studies that we have. that they provided.
+AI: That's fantastic to hear. It sounds like your solution had a significant impact, not only in terms of efficiency but also in client satisfaction. How has the collaboration been with TechYard throughout the project?
+USER: It's been quite great. We had it. too much We added ketchup really often, so... we really made sure that we... We meet their needs and goals.
+AI: That's great to hear. Frequent check-ins can really ensure everything stays on track. Is there any specific feedback from TechYard that stood out to you or made you particularly proud?
+USER: Yes.
+AI: Was there any feedback from TechYard that stood out to you during the project?
+USER: Yes.
+AI: Please share any memorable feedback or quotes from TechYard that you're particularly proud of.
+USER: Okay, they said that creating something that took us... two to ten days, no, only by ten minutes, it's not something... Thank you. Only great is something impressive magic and Oh amazing. Wonderful!
+AI: That's incredibly high praise. It must feel rewarding to hear such positive feedback. So, looking back, what makes this project stand out to you? Why do you think it's a great case study to share?
+USER: Yes.
+AI: It truly sounds like a game-changer for them. Wrapping up, what makes this project stand out to you, and why do you think it’s a great case study to share?

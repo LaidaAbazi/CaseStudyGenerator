@@ -1,0 +1,33 @@
+AI: Hi, welcome to the Case Study Generator. How can I help you today?
+USER: Hi.
+AI: Hi there! I’d love to know a bit more about you. Could you share your name, the company you're with, and your role there?
+USER: Yes.
+AI: Great! To get
+USER: My name is Lleida Wosin.
+AI: Great to meet you, Laila. Great to meet you, Yaita. What’s your role at Rexolution Group?
+USER: I work at Burek Solution Group Company. AI. developer.
+AI: Fantastic. So, as an AI Developer at Rexolution Group, you must work on some interesting projects. Can you tell me which project or product we'll be focusing on for this case study?
+USER: My role is... Yes. We're going to focus on a product called Kiss Study Jan.
+AI: Perfect. CaseStudyGen it is. Let's dive into a bit of background. Who was the client for this product, and what industry are they in?
+USER: Evet. client was
+AI: No worries.
+USER: 6
+AI: Got it.
+USER: Alta is a marketing company.
+AI: Great, so the client was Alta, a marketing company. What specifically makes Alta stand out in their industry?
+USER: The are one of the and No. mājs not this wool and popular.
+AI: Understood. Alta is known for being notable and popular in the marketing space. Now, what was their business model or key focus during
+USER: Popular marketing companies, they operate in 15 countries. countries in Europe.
+AI: Got it, sounds like Alta is a major player in the European marketing space. Now, what was their business model or focus when they approached you for the CaseStudyGen project?
+USER: They were getting trying to give. their clients good quality fashion. Be fashioned. solutions and as fast as they can. So.
+AI: Alright, so Alta was focused on delivering high-quality and efficient solutions to their clients. Let's talk about the challenge they were facing. What specific problem did Alta need help with when they came to Rexolution Group for the CaseStudyGen project?
+USER: Sorry, I have to go.
+AI: No problem at all. We can continue this another time. Thanks for chatting today, Yaita. Have a great day!
+USER: Thank you. You too. Goodbye.
+AI: Goodbye! Take care.
+USER: Bye.
+AI: Hi again! Ready to continue where we left off?
+USER: Good. And why?
+AI: Take care, goodbye!
+USER: Goodbye.
+AI: Goodbye!

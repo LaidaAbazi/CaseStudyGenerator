@@ -1,0 +1,5 @@
+AI: Hey there, I’ve been looking forward to this — excited to dive into your story today.
+USER: Hello.
+AI: Hi! Before we jump in, just to get the context right — is this case study about an internal initiative within your organization, or something you worked on with an external client, partner, or supplier?
+USER: as for an internal. project. Thanks for watching. I'll see you next time. Bye bye.
+AI: Got it, thanks for clarifying. So, what's your name?

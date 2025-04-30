@@ -1,0 +1,20 @@
+AI: Hello there, and welcome! I'm really glad you could join me today. Before we get into the nitty-gritty of your project, I'd love to get to know you a bit. Could you start by sharing your
+USER: Hello
+AI: Hi there! It’s great to have you here. Before we jump into your project, could you tell me a bit about yourself? What's your name, the company you're representing, and your role there? And of course, I'd love to hear about the project you’re here to discuss.
+USER: I'm Laida Bozzi, I work at Burek Solution Group Company.
+AI: Nice to meet you, Leida! And what's your role at Bragg Solutions Group? Oh, and could you also share the name of the project we'll be focusing on?
+USER: Yes, my role there is... Um... AI developer.
+AI: Got it, an AI Developer. That's an interesting role. And what's the name of the project you'll be telling me about today?
+USER: our product called Key Study Gen.
+AI: Great, we'll be talking about Case Study Gen. Now, to set the stage, can you tell me a bit about the client you worked with on this project? What do they do and what industry are they in?
+USER: Yes
+AI: Perfect, thank you. Let's set the stage a bit now. Who was the client you worked with for Case Study Gen, and could you share a little about what they do and the industry they're in?
+USER: Yes
+AI: Great, so tell me, who was the client you worked with
+USER: I the client we worked on is TechYard. Um...
+AI: TechYard, got it. What kind of business are they in, and what brought them to you?
+USER: I...
+AI: Take your time. What brought TechYard to you, and what kind of challenges were they facing?
+USER: They are an industry business, they are... Bye.
+AI: You're very welcome! Thank you, and I hope you have a fantastic day as well. Goodbye!
+USER: They work with Thanks

@@ -1,0 +1,2 @@
+AI: Hi, and welcome to the AI Case Study Generator. It’s great to have you here.
+USER: Bye.

@@ -1,0 +1,24 @@
+AI: Hi, your Case Study Generator here — thank you for joining me.
+
+[Pause and wait for the user to respond.]
+
+Before we dive in, could you briefly introduce yourself? I’d love to know your name, the company you're representing today, and your role there.
+USER: What?
+AI: Hi, your Case Study Generator here — thank you for joining me.
+USER: Hi.
+AI: Great to have you here. Before we dive in, could you briefly introduce yourself? I’d love to know your name, the company you're representing today, and your role there.
+USER: Yes, my name is Laida Abouazi, I'm representing Borac Solution Group company and my role there is AI developer.
+AI: Perfect. If you’re ready, let’s talk about the success story you’d like to share — whether it’s a product or project you worked on. What’s the name of the project or product we’ll be focusing on for the case study?
+USER: Okay.
+AI: Perfect. If you’re ready, let’s talk about the success story you’d like to share — whether it’s a product or project you worked on. What’s the name of the project or product we’ll be focusing on for the case study?
+USER: OK, OK, OK, OK, I heard it. So what's the question?
+AI: I appreciate your patience. What's the name of the project or product we'll be focusing on for the case study today?
+USER: We're... focusing and for our product called Case Study Gen.
+AI: Got it, "Case Study Gen." Let's explore the client you worked with for this product. Can you tell me a bit about them—who they are, what industry they're in, and what sets them apart?
+USER: Yes, they are Eh... Taktika operates in the marketing industry. really famous and popular marketing company that provides marketing solutions.
+AI: Tactica, a well-known name in the marketing industry, sounds like a fascinating client. What specific challenge were they facing when they approached you?
+USER: They were facing They have a problem in spending too much time to create case study documents. and too much energy. which they thought that it's better to reduce that time. and to make it an automated way.
+AI: I see, they wanted to streamline the process of creating case studies, which can be quite consuming. How did your product, Case Study Gen, address this challenge for Tactica?
+USER: we created a AI tool called. Key study done.
+AI: And how does Case Study Gen work to make the process more efficient?
+USER: okay um case study jane is an ai2 where the AI and the user do a conversation. And sorry, I have to go. Sorry. Goodbye

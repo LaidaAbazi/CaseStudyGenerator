@@ -1,0 +1,35 @@
+AI: ¡Hola! ¿En qué puedo ayudarte hoy?
+USER: Hello.
+AI: Hey there! How's it going?
+USER: Great.
+AI: Glad to hear it! So, are you ready to dive into our chat today? I've been really looking forward to hearing your story.
+USER: Uh, yes.
+AI: Awesome! Let's get started. What's your name?
+USER: My name is Laila Abbasi.
+AI: Nice to meet you, Laida. So, what's keeping you busy these days? What kind of work do you do?
+USER: I am... AI developer.
+AI: That's cool! AI development is such a fascinating field. Are you working with a particular team or company on your projects?
+USER: Yes, I'm working with Borax Solution Group.
+AI: Nice, Borax Solution Group. Sounds like a solid place to be doing some cutting-edge work. So, is the story you're planning to share today about something you worked on within Borax, or was it for an external client or partner?
+USER: Borek. Burek Solution Group.
+AI: Ah, got it. You're with Borak Solution Group. Thanks for clarifying that. So, is the story we're about to dive into something you worked on internally with your team, or was it for an external client or audience?
+USER: Um, it's actually, uh... an internal project.
+AI: Ah, an internal project. Very interesting. What sparked the idea for this project within Borak Solution Group? Was it a challenge you needed to address, or maybe an opportunity you wanted to seize?
+USER: Mm-hmm.
+AI: Great! So, tell me a bit about Borak Solution Group. What's the main focus of the team there?
+USER: I'm The main focus is to provide tax solution to their clients and it operates in three countries Germany, Kosovo and India.
+AI: Nice, quite the global reach! So, what sparked this internal project? Was it a new challenge, an opportunity, or maybe just a "let's do this" moment?
+USER: Huh. Actually, it was mixed up. each. Epic. we noticed that businesses take so much time to generate case study documents for their products or projects and we were about okay we're gonna see it like We're gonna do it like Um... Yeah. You know, we're going to automate this to save them time and energy on that. and to give them a good, perfect, formatted case study document.
+AI: That's brilliant! Automating case study generation sounds like a massive time-saver. So, how did your team at Borak Solution Group go about creating this automated solution?
+USER: It's... ghosts Um How was my day? to... Can you repeat?
+AI: Of course! I'm curious about how your team went about creating the automated solution for generating case studies. What did you actually build or change to make it happen?
+USER: We built an AI tool. called Case Study John.
+AI: Case StudyGen, catchy name! So, how does Case StudyGen work? What are the key components or clever pieces that make it effective?
+USER: I It works like this, so it has a conversational part with... our AI voice agent and our, and um... the client who want to generate a case study document, the user, and then after a 10-minute conversation, it's going to generate a case study document.
+AI: That's impressive! So, the user has a conversation with your AI voice agent, and in just 10 minutes, they get a well-formatted case study document. Quick and efficient! How has the rollout been?
+USER: Great
+AI: Awesome to hear! So, what was the reaction like from your team at Borak Solution Group? Any memorable moments or feedback now that Case StudyGen is out there?
+USER: Yes, they are really happy. Sorry, I have to go. Um...
+AI: No worries,
+USER: See you and... Bye. Goodbye
+AI: No worries, Laida. Thanks for sharing your story. Take care, and maybe we'll chat again soon. Goodbye!

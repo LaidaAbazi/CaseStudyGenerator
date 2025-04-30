@@ -1,0 +1,35 @@
+AI: Hi, your Case Study Generator here — thank you for joining me.
+USER: Hello.
+AI: Great to have you here. Before we dive in, could you briefly introduce yourself? I’d love to know your name, the company you're representing today, and your role there.
+USER: Um... Yes, my name is Laida Aboze, I work at Borek Solution Group Company and my role there is AI developer.
+AI: Thank you, Liida. It's a pleasure to meet you. Now, if you're ready, let's talk about the success story you'd like to share with me today. What's the name of the project or product we'll be focusing on for the case study?
+USER: Yes.
+AI: Nice to meet you, Lida. Let's talk about the success story you'd like to share — whether it’s a product or project you worked on. What’s the name of the project or product we'll be focusing on for the case study? Take your time. Whenever you're ready, I'd love to hear about the project or That's great, L
+USER: So, I'm going to talk about our product called Bye. Case study done.
+AI: "Case StudyGen" sounds like an intriguing product. Can you tell me a bit about the client we'll be focusing on for this case study — who are they, and what do they do?
+USER: Um... Yes, the client is Taktika, they are... marketing company. Um
+AI: Got it. Taktika is a marketing company. What challenges were they facing that led them to approach you and ultimately use Case StudyGen?
+USER: they were facing in spending too much time on manual case study of manual creation of case study documents which cause them loss of their time and energy and workers
+AI: I see. They were losing a lot of time and energy due to the manual process of creating case study documents. That's definitely a significant challenge. How was this issue impacting their business or operations?
+USER: Um, maybe. Losing so much time and focusing there and letting the other. jobs that are like more important or anything to and taking their time to do another job and focusing on this for days.
+AI: Got it. The time they spent on manually creating case studies was taking them away from other critical tasks, impacting their efficiency. Let's dive into the solution you provided with Case StudyGen. What did you and your team deliver to Taktika to address their challenge?
+USER: Can you repeat the question please?
+AI: Of course. I'd love to hear about the solution you provided for Taktika with Case StudyGen. How did your product help them overcome the challenge of spending too much time on manual case study creation?
+USER: Yes, we provided an application called case study. John. which is an AI tool when the user can do a conversation with the AI and then have, after 10 minutes, have a case study document, a perfect case study document format.
+AI: That's fascinating! Case StudyGen sounds like a powerful tool, especially with the capability to generate a well-formatted case study document in just 10 minutes through conversation. What kind of impact did this solution have for Taktika?
+USER: Um... Okay. Of course, they have so much improvements.
+AI: That's encouraging to hear. Could you share more about the specific improvements Taktika experienced after implementing Case StudyGen? For instance, how did it affect their time management or the quality of their case study documents?
+USER: yes So they save time by 80%, they reduce the manual work by 80%, they have an increase of the clients for 45% and Yes, they're They have more. Let's see. client's certification with their case study documents.
+AI: Those are impressive results. Saving 80% of their time and reducing manual work is significant, and a 45% increase in client acquisition is remarkable. Plus, it's fantastic to hear that their client satisfaction with the case study documents has improved. Were there any particular moments during this project that stood out to you or any feedback from Taktika that you'd like to highlight?
+USER: Yes, they have such good feedbacks.
+AI: That's wonderful to hear. Was there any specific feedback from Taktika that resonated with you, perhaps something they said that really captured the value of Case StudyGen for them?
+USER: Yes, they said that reducing work fat. It takes us 2-10 days instead of 2-3 days. to two minutes. It's wonderful. In 10 minutes, sorry It's wonderful.
+AI: That’s a powerful endorsement. The shift from days of work to just 10 minutes is indeed wonderful. It must be rewarding to know your solution is making such a difference for them. Looking back on this project, what would you say makes this story worth sharing?
+USER: Yes.
+AI: It sounds like a project you're proud of, and rightly so. Thank you for sharing this with me, Lida. If there's anything else you'd like to include in the case study or any final thoughts, feel free to share.
+USER: No, I don't have it
+AI: That's perfectly fine. Thank you once again for sharing your story. It's been a pleasure learning about the impact of Case StudyGen. Wishing you continued success with your innovative work at Product Solution Group.
+USER: Thank you so much. Goodbye.
+AI: You're welcome. Goodbye, Lida. Take care!
+USER: Goodbye
+AI: Goodbye!

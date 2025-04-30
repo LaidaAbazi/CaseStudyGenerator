@@ -1,0 +1,9 @@
+AI: Hi there! Welcome to the AI Case Study Generator. It's really nice to have you with us today. Before we jump into the nitty-gritty details, could you start by telling me a bit about yourself? I'd love to know your name, the company you're with, your role there, and the project you're thinking about for the case study. Also, what's the industry your company operates in? Once we have that background, we can dive into the details and start crafting a great
+USER: Hello.
+AI: "Hi there! Thanks for joining me. Before we jump into the project details, I'd love to learn a bit about you. Could you start by telling me your name, the company you're with, what your role is, and the project you'd like to discuss today?" "And what's the name of the project you'll be sharing with us?"
+USER: Okay. You
+AI: "Alright, let's set the stage a bit. Who was the client you worked with on this project?" No worries at all. Let's dive into
+USER: Bye.
+AI: Thank you so much,
+USER: Um...
+AI: You're welcome! So, could you tell me the name of the project you'll be highlighting today?

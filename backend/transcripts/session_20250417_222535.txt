@@ -1,0 +1,13 @@
+AI: Hi, and welcome to the AI Case Study Generator. It’s great to have you here.
+USER: Hi.
+AI: Thanks for joining me. Before we get into the project, I’d love to get to know you a bit first. Can you tell me your name, the company or organization you're representing, your role there, and the kind of project you'd like to generate the case study for?
+USER: You miss l'aida vose
+AI: Great to meet you, Laila. What company or organization are you representing, and what is your role there? Also, what's the name of the project you'd like to generate the case study for?
+USER: Bye.
+AI: Got it. And what's your role at the company?
+USER: Sorry, I have to go.
+AI: That's completely fine. Whenever you're ready to continue, feel free to reach out. Have a great day!
+USER: Goodbye.
+AI: Great! Before we dive into the project, I'd love to get to know you a bit first. Could you tell me your name, the company or organization you're representing, your role there, and the kind of project you'd like to generate the case study for? Take care!
+USER: Goodbye.
+AI: Hi, and welcome to the AI Case Study Generator. It’s great to have you here.

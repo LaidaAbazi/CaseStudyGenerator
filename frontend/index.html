@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Case Study Interview</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f6f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+    }
+
+    h1 {
+      color: #4e73df;
+      font-size: 2rem;
+      text-align: center;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+
+    #interviewSection, #caseStudySection {
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      width: 100%;
+      max-width: 500px;
+      margin: 20px;
+      text-align: center;
+    }
+
+    #startBtn {
+      background-color: #4e73df;
+      color: white;
+      border: none;
+      padding: 20px;
+      border-radius: 50%;
+      font-size: 2rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    #startBtn:hover {
+      background-color: #2e59d9;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .countdown {
+      font-size: 2rem;
+      color: #4e73df;
+      font-weight: bold;
+    }
+
+    #spinner {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .loader {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #4e73df;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin-top: 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    #downloadBtn {
+      background-color: #4e73df;
+      color: white;
+      padding: 12px 25px;
+      text-decoration: none;
+      border-radius: 5px;
+      font-size: 1.1rem;
+      display: inline-block;
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    #downloadBtn:hover {
+      background-color: #2e59d9;
+    }
+
+    #status {
+      font-size: 1rem;
+      color: #666;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>AI Business Case Study Generator</h1>
+
+  <!-- INTERVIEW SECTION -->
+  <div id="interviewSection">
+    <button id="startBtn"><i class="fa fa-microphone"></i></button>
+
+    <div id="status">Initializing...</div>
+    <div id="countdown" class="hidden">
+      <p class="countdown" id="timer">1:00</p>
+    </div>
+    <audio id="aiAudio" autoplay></audio>
+  </div>
+
+  <!-- CASE STUDY GENERATION SECTION -->
+  <div id="caseStudySection" class="hidden">
+    <h2>Generate Your Case Study</h2>
+
+    <!-- Color Pickers -->
+    <p>Choose Primary Color:</p>
+    <input type="color" id="color1" value="#ff0000" /><br>
+
+    <p>Choose Secondary Color:</p>
+    <input type="color" id="color2" value="#00ff00" /><br>
+
+    <p>Choose Accent Color:</p>
+    <input type="color" id="color3" value="#0000ff" /><br>
+
+    <!-- Image Uploads -->
+    <p>Upload your company logo (optional):</p>
+    <input type="file" id="logoInput" accept="image/*" /><br>
+
+    <p>Upload your product/project photo:</p>
+    <input type="file" id="productInput" accept="image/*" /><br>
+
+    <p>Upload an additional image:</p>
+    <input type="file" id="extraInput" accept="image/*" /><br>
+
+    <button onclick="submitLogoAndGenerate()">Generate Case Study</button>
+
+    <div id="spinner" class="hidden">
+      <p>Generating your case study...</p>
+      <div class="loader"></div>
+    </div>
+
+    <a id="downloadBtn" class="hidden" href="#" download="case_study.pdf">
+      Download Case Study
+    </a>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

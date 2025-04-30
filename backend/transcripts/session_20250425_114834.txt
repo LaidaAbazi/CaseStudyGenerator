@@ -1,0 +1,17 @@
+AI: Hi, you're talking to the Case Study Generator. I'm here to help craft the story behind your successful project. Let's start with your introduction. Could you share your name, the company you're with, and your role there? Also, what project or product are we focusing on for this case study?
+USER: Hello.
+AI: Great to have you here. Let's begin with a quick introduction. Could you share your name, the company you're with, and your role there?
+USER: Okay.
+AI: Great! To get started, could you share your name, the company you're with, and what your role is? I'd love to learn a bit about you.
+USER: Okay, my name is Laida Apoze. I work at Burek Solution Group Company. My role there is AI developer.
+AI: Great to meet you, Laida! If you’re ready, let's dive into the success story you'd like to share. What's the name of the project or product we'll be focusing on today?
+USER: Okay.
+AI: Great. If you're ready, let's talk about the success story you'd like to share. What’s the name of the project or product we'll be focusing on for the case study?
+USER: OK, OK, let's let's go.
+AI: Great! Let's dive in. What's the name of the project or product you’d like to focus on for this case study?
+USER: It's a case study journal product.
+AI: Got it, the Skytouch product. Now, could you tell me a bit about the client — who they are and what they do?
+USER: They are tech yard, they operate in tech industry. MBC 뉴스 이덕영입니다.
+AI: Got it, TechYard in the tech industry. Now, could you share a bit more about TechYard's business model or their key focus at the time of the project?
+USER: Sorry, I have to go, goodbye. Goodbye, goodbye.
+AI: Goodbye! Take care, and feel free to come back anytime.

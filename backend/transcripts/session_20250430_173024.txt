@@ -1,0 +1,47 @@
+AI: Well, hello there! Thanks for hopping on. How's your day shaping up so far? Hey there! How's everything on your end today?
+USER: Hi! Great, I have some issues. in my project, but... Good, I'm doing great.
+AI: Oof, project issues can be a handful, can't they? But I'm glad to hear you're doing well otherwise. Let's dive into something fun. What's your name?
+USER: My name is Leida Bozzi.
+AI: Nice to meet you, Leyda! So, what kind of work do you get up to these days?
+USER: What do you mean by that?
+AI: Oh, I meant, what's your role like? What kind of work do you do?
+USER: I work as... And the looper.
+AI: Ah, an AI developer! That's pretty cool. So, are you working on something internal with your team, or is it a project for a client or partner?
+USER: What?
+AI: Sorry, let me clarify. Is the project you're working on something within your own company, or are you developing something for an external client or partner?
+USER: internal.
+AI: Got it, working on something within your own organization. So, Leyda, what's the purpose of your team, and what kind of AI magic do you usually work on?
+USER: Okay, our product solution is a company that operates in the tech industry and It's headquartered... The headquarters are in Germany and operates in Germany. three countries like Germany, Kosovo, and India. It provides many, it has many clients. work with money. difference. different places.
+AI: That's quite a spread! Tack Industry sounds like it's got a global footprint with Germany, Kosovo, and India in the mix. So, what sparked this project you're working on? Was it tackling a specific challenge or seizing an opportunity?
+USER: Actually, yes, we tried to... Do something that helps us to
+AI: Alright, so it sounds like you were looking to create something that would be a real help. What exactly did your team end up building or changing? I'm curious how the idea
+USER: To
+AI: To... build some suspense here! I'm really curious, what did you aim to achieve with this project? What's the big goal?
+USER: What? Um... We aim to achieve and to solve the new creation of case studies which cause companies and businesses so much time-spanning. Bye.
+AI: That's a smart move!
+USER: and energy-spanning, and we wanted something to automate that.
+AI: Automating the creation of case studies to save time and energy—genius! So, what did your team come up with? How did the idea evolve?
+USER: Um... Это обувь.
+AI: Take your time. I'm
+USER: Bye.
+AI: The idea sounds like it's got some layers to it. How did it evolve from the initial concept?
+USER: Hey Can you repeat the question, please? That was not answered.
+AI: Of course! I asked what your team actually came up with to automate case study creation and how the idea evolved over time. What did you actually build or change?
+USER: It was an AI tool called Case Study Jan and the idea was like that, we just trying to automate this process and what was best either than in this case, an AI tool. to automate this process and then we made an AI tool which has a conversational board between our AI voice agent and the user which gonna share their success story and then with that conversation After 10 minutes, our AI tool is going to generate automatically a case study document for their All right. success story.
+AI: Wow, that's clever! A conversational AI tool that takes a user's success story and whips up a case study document in just ten minutes. That's a game-changer for sure. How did the roll-out go? Were there any bumps along the way?
+USER: Not not really not maybe something that i would mention.
+AI: Smooth sailing, then. That's great to hear. So, what was the outcome? Did you see any noticeable changes or feedback from your team or the users?
+USER: Yes, yes.
+AI: Nice! Any memorable feedback or reactions from the team that stood out to you?
+USER: and we gonna talk about results first.
+AI: Absolutely, let's get to the results. What changes did you see after rolling out Case Study Gen? Any metrics or success stories you can share?
+USER: Yes, we noticed an 80% reduction of manual work, 80% saving time. 40% increase of... Client satisfications
+AI: Wow, those are impressive numbers! An 80% reduction in manual work, 80% time savings, and a 40% boost in client satisfaction. That's some serious impact. And personally, what did it mean to you to see these results?
+USER: Mm-hmm.
+AI: An 80% reduction in manual work, an 80% time saving, and a 40% boost in client satisfaction—that's huge! It's got to feel pretty rewarding to see those outcomes. What did this mean to you personally?
+USER: It means really much actually because it's one of my First AI projects and. It is an innovative thing and market that isn't. Existing right now
+AI: That's incredible, Leyda. Your first AI project, and you've created something truly innovative that didn't exist before. You must be proud. Is there anything someone said about the project that really stuck with you? Or if not, how about we craft a memorable quote together?
+USER: Um, actually, yes, a client said that... You created something that Put my work of 10 days to 10 days. 10-minute conversation. like drinking a coffee and... Please, sis. 오우 마지크
+AI: Wow, that's an amazing compliment! Turning ten days of work into a ten-minute conversation—like magic. That's got to feel fantastic to hear. Thanks so much for sharing your story, Leyda. It's been a pleasure. I'll take what you've shared and put together a case study summary. Catch you later, and keep working that magic!
+USER: Goodbye. Thank you so much. You were so fine.
+AI: Take care, Leyda! It was great chatting with you. Goodbye!
