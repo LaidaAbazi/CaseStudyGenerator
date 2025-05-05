@@ -1,0 +1,43 @@
+AI: Hey there! Haha, no need for the formalities — I'm just your friendly AI podcast host today. I'm so glad you could join me for a chat. How's your day going? Anything exciting happening today?
+USER: Hello.
+AI: Hey there! How's it going? I’m really excited to chat with you today. What’s been keeping you busy lately?
+USER: Great
+AI: Awesome, glad to hear that! So, what's your name? I don't think I caught it yet.
+USER: Thank you. Lei dà pose.
+AI: Great to meet you, Laila! So, what do you do, by the way? What's your role like these days?
+USER: I work... Whoa.
+AI: Oh, sounds like you might be having some technical difficulties. No worries! Take your time. We're here to chat, no rush at all.
+USER: I work. Yes. AI-девелопер.
+AI: Nice! Working in IT, that's pretty cool. Are you currently working on something interesting, maybe with a team or a client?
+USER: AI, AI developer.
+AI: Ah, gotcha, an AI developer! That's pretty awesome. Are you working with a team on this, or is it more of a solo effort?
+USER: Bye. It's... team, of course.
+AI: Nice, teamwork makes the dream work, as they say! So, Laila, are you working with a client on a particular AI project right now? I'd love to hear more about the client you're helping out.
+USER: Bye. Bye.
+AI: No worries! Take your time.
+USER: Yes
+AI: Fantastic! So, tell me a little more about this client of yours. Who are they, and what's their story?
+USER: They are Tactica, they are a marketing company.
+AI: Ah, a marketing company! Sounds like a fun field to work in. So, what kind of challenges or needs did Tactica come to you with?
+USER: Um...
+AI: Take your time, no rush. I'm all ears when you're ready.
+USER: with manual creation of case study documents.
+AI: Got it. So, they needed help streamlining the process of creating case study documents. How did you and your team step in to solve that challenge?
+USER: Bye.
+AI: No rush, take
+USER: We created an AI tool called Case StudyGen. which provides solution by using an AI voice agent to do a conversation. with the user who want to generate a case ID document and then after this 10 minutes. It's going to give the user a perfect case study document.
+AI: Wow, that sounds pretty cutting-edge! An AI tool that can generate a case study document in just 10 minutes? That's a game-changer. How did you implement CaseStudyGen, and what do you think makes it stand out from other solutions?
+USER: because it's AI powered. Bye! And there's no, no, no solution like that.
+AI: That's fantastic, L
+USER: in markets. Right now
+AI: Absolutely, being AI-powered definitely gives it a unique edge! It's cool that you're offering something fresh in the market. Now, I'm curious, were there any unexpected surprises or outcomes while developing CaseStudyGen?
+USER: No, not actually.
+AI: Ah, smooth sailing, nice! So, what kind of results did Tactica see after implementing CaseStudyGen? Any impressive metrics or milestones you'd like to share?
+USER: Yes, they were really happy with that.
+AI: That's fantastic to hear! Making a client happy is what it's all about. So, before we wrap up, let me ask — would you prefer to handle creating the case study yourself, or would you like to involve Tactica in the process too?
+USER: Maybe... Involve. Taktika?
+AI: Sounds like a plan! We'll make sure to involve Tactica for that final touch. Let's go ahead and schedule that next step. Thanks so much, Laila — that was a fantastic story. I'll catch you later and good luck with your project!
+USER: OK.
+AI: Take care, Laila! Talk to you soon!
+USER: Goodbye
+AI: Goodbye!

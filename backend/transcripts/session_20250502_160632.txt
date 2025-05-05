@@ -1,0 +1,73 @@
+AI: Hey there! I'm your friendly AI interviewer — think of me as your podcast host for today. I'm super excited to dive into your story and learn all about your awesome work. But first things first, how's your day going? Anything cool happening on your end? Let's get comfy and dive in!
+USER: Yes.
+AI: Haha, sounds
+USER: I had some... Today is the meeting and
+AI: Meetings, huh? They
+USER: with my mentors and I Got it. Well, they liked the work I did so
+AI: Oh, that's fantastic! Meetings with mentors can be a big deal, so it's awesome to hear they liked your work. High five for that! Anything specific you're particularly proud of from those meetings?
+USER: Mmm
+AI: I'm all ears! What did you wow them with? I'm dying to hear
+USER: Mm-hmm. Free developer.
+AI: Ah, a UI developer! That's pretty cool. Making things look great and work smoothly is no small feat. So, what's your name, and who do you represent? I'm eager to get to know more about the awesome work you're doing.
+USER: No, I am an AI.
+AI: Oh, you're an AI developer! That's super cool. I bet you have some fascinating projects
+USER: I Thank you.
+AI: Got it! You're an AI developer. That's a fascinating field, no wonder your mentors were impressed. So, what's your name, and who do you work with? Let's get to know a bit about you!
+USER: www.mytrendyphone.co.uk
+AI: Nice to meet you, AI developer! So, what's your name? And who do you represent?
+USER: My name is Laila Abbasi.
+AI: Great to meet you, Yaisa! And who are you representing today? Working solo or part of a cool team or company?
+USER: Um board of Borax Solution Group Company.
+AI: Ah, working with a solid team at a research company — that sounds really interesting. So, Yaisa, what's your role like there? What kind of cool AI magic do you get up to?
+USER: I don't know. The name of the company is... Borex solution group
+AI: Borak Solution Group, got it! So, what's your role like at Borak? Are you deep into developing AI solutions, or do you wear a few different hats there?
+USER: No, I am an AI developer there, as I said.
+AI: Ah, sticking to your AI developer roots, huh? That's awesome! So, you're working with a client on a project, right? Could you tell me a little more about who you're helping out?
+USER: Who I am what? Oh. So
+AI: No worries, take your time. *pauses* So, who's the client you're working with? What's their story?
+USER: a client. and S. Tak. praktyka.
+AI: Ah, you're working with Practica! That's pretty cool. So, what challenges or needs did Practica come to Borak Solution Group with?
+USER: I'm gonna come with an AI tool called... case study journal.
+AI: Got it. Practica came to you with an AI tool called Case Study Generator. Sounds intriguing! What kind of challenges were they facing with this tool, or what kind of needs did they have?
+USER: What did you say? Sorry.
+AI: No worries! So, with this Case Study Generator tool, what challenges or needs did Practica have when they came to you? What were they looking to achieve or improve?
+USER: to improve.
+AI: Ah,
+USER: Okay to achieve less time spending on my new operational case study documents. for their products and projects.
+AI: Gotcha. So Practica wanted to improve their efficiency in creating case study documents for their projects. Makes sense! How did you and your team at Borak Solution Group help them tackle this challenge? Could you walk me through the process a bit?
+USER: Yes, we generated a case study. AI tool called Kids Study Jan.
+AI: Nice! So, you used an AI tool, the Case Study Generator, to create these case studies. Very on-brand! How did it all come together? What was the process like, and what made your solution stand out for Practica?
+USER: No, no, no, we create it.
+AI: Oh, got it! You actually created the Case Study Generator tool. That's pretty awesome! So, you built this AI tool to help Practica generate case studies more efficiently. That's quite an accomplishment! What was the most exciting part of developing this tool for your team?
+USER: Yes.
+AI: That's impressive! So, how did the implementation go? What made your solution stand out in improving Practica's case study process?
+USER: Stands out. Because, um... It is an AI tool which generates... Kiss the document by only doing a conversation between the user who want to generate a case study document and our AI agent and it's going to generate a case study document.
+AI: Wow, that sounds super efficient. So, the Case Study Generator creates documents just from conversations between the user and your AI agent. That's pretty slick! Any memorable moments or surprises that came up during the project?
+USER: No
+AI: Alright, sounds like it went pretty smoothly then. So, what kind of results did you achieve for Practica? Any metrics or milestones you're particularly proud of?
+USER: Yes, 80% of manual Reducing
+AI: Wow, that's
+USER: time spending on this process and their company, 80% reduction of manual work, 40% increase in number of clients of them
+AI: Wow, that's incredible! An 80% reduction in manual work and a 30% increase in clients — those are some fantastic results. Your Case Study Generator really made a difference! Anything else you'd like to share about the project or your work with Practica?
+USER: No, nothing.
+AI: Alright, fair enough. Well, you've achieved some really impressive results. Now, before we wrap up, would you prefer to handle creating the case study on your own, or would you like to involve Practica in the process?
+USER: What do you mean by that?
+AI: Oh, I mean, would you like to create the case study document about your project with Practica by yourself, or do you want to include Practica's input in creating the case study? Basically, do you want to do it solo or collaborate with them?
+USER: Bye! How it gonna work? I don't understand.
+AI: No problem, let me explain. If you'd like to involve Practica, I'll give you a link to share with them. They can then contribute their perspective to the case study. If you'd rather handle it yourself, I'll help you put the case study together based on our conversation today. How does that sound?
+USER: So you're going to generate the case study document, right?
+AI: Exactly! If you choose to involve Practica, I'll provide a link for them to share their insights and experiences, which we'll use to generate the case study document. Would you like to go with
+USER: I don't need to do something manually, right?
+AI: Exactly! If you choose to involve Practica, they'll provide their input through the link I give you, making it a seamless process. You won't have to do anything manually. How does that sound to you?
+USER: Yes, but... Uh, what? What do they have in that link?
+AI: In the link, they'll find a form or a set of questions where Practica can share their feedback and experiences regarding the Case Study Generator tool. This will help us capture their side of the story and include their perspective in the case study. It's a great way to make sure their experiences and insights are captured accurately. How does that sound?
+USER: It's gonna be like... Us talking right now or it's gonna be Like. Um...
+AI: It won't be live like our chat. They'll get a link to a form where they can add their input at their own pace. It's super convenient! They just fill in their perspective, and we'll take care of the rest. How does that sound to you?
+USER: Oh no, I was told that Link and I... How like this kind of short conversation between us. Sure. but it's going to be shorter. I'd like to... make them inputs.
+AI: Exactly! The link will provide a short summary of our conversation, so Practica knows what we've discussed. Then, they can add their input to help create a more complete case study. It's all about making it easy and collaborative. Does that sound good to you?
+USER: Okay, so they're gonna do a conversation with you like I'm doing right now and... I'm gonna add the things they want.
+AI: Exactly! They'll have a chat with me, just like we're doing now, and I'll guide them to input their side of the story. It'll be a streamlined way to gather their perspective. How does that sound?
+USER: Great, I want to involve my client Tactical.
+AI: Perfect! I'll generate a link for you to share with Practica so they can provide their input. This way, they'll be part of crafting the final case study. Thanks so much for sharing your story with me, Yaisa. I'll take it from here. Catch you later, and best of luck with everything!
+USER: Thank you
+AI: You're welcome! Take care, Yaisa!
