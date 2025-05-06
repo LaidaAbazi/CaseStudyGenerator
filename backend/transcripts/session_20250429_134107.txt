@@ -1,3 +1,0 @@
-AI: ¡Hola! ¿En qué puedo ayudarte hoy? Nice to meet you,
-USER: Bye. Bye. Bye. Christian Okay, see you soon. Be on course. Bye. Bye.
-AI: Hi there! Nice to meet you. What's your name?

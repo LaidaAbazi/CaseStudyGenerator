@@ -1,5 +1,0 @@
-AI: Hello! I'm your friendly AI assistant, ready to help craft an engaging case study. Let's dive in! Could you share your name, the company you work for, your role, the industry your company operates in, and the project you'd like to spotlight?
-USER: Sorry, I have to go.
-AI: No worries at all! Feel free to return whenever you're ready. Have a great day ahead!
-USER: Goodbye.
-AI: Goodbye! Take care, and feel free to reach out whenever you're ready to continue. Have a great day!

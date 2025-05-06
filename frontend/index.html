@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AI Case Study Interview</title>
+  <title>Case Study Generator</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <style>
@@ -11,26 +11,25 @@
       font-family: 'Arial', sans-serif;
       margin: 0;
       padding: 0;
-      background-color: #f4f6f9;
+      background: linear-gradient(145deg, #eef1f5, #ffffff);
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
       flex-direction: column;
+      min-height: 100vh;
     }
 
     h1 {
-      color: #4e73df;
-      font-size: 2rem;
+      color: #3a3a5a;
+      font-size: 2.2rem;
       text-align: center;
-      margin-bottom: 20px;
-      font-weight: 600;
+      margin: 30px 0 10px;
     }
 
     #interviewSection, #caseStudySection {
-      background-color: #fff;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      background-color: #ffffff;
+      border-radius: 15px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
       padding: 30px;
       width: 100%;
       max-width: 500px;
@@ -39,7 +38,7 @@
     }
 
     #startBtn {
-      background-color: #4e73df;
+      background-color: #3a86ff;
       color: white;
       border: none;
       padding: 20px;
@@ -47,11 +46,11 @@
       font-size: 2rem;
       cursor: pointer;
       transition: background-color 0.3s ease;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
     }
 
     #startBtn:hover {
-      background-color: #2e59d9;
+      background-color: #265df2;
     }
 
     .hidden {
@@ -60,7 +59,7 @@
 
     .countdown {
       font-size: 2rem;
-      color: #4e73df;
+      color: #3a86ff;
       font-weight: bold;
     }
 
@@ -71,12 +70,12 @@
 
     .loader {
       border: 6px solid #f3f3f3;
-      border-top: 6px solid #4e73df;
+      border-top: 6px solid #3a86ff;
       border-radius: 50%;
       width: 30px;
       height: 30px;
       animation: spin 1s linear infinite;
-      margin-top: 20px;
+      margin: 10px auto;
     }
 
     @keyframes spin {
@@ -84,8 +83,30 @@
       100% { transform: rotate(360deg); }
     }
 
+    #status {
+      font-size: 1rem;
+      color: #555;
+      margin-top: 20px;
+    }
+
+    #endBtn {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: background-color 0.3s ease;
+    }
+
+    #endBtn:hover {
+      background-color: #c82333;
+    }
+
     #downloadBtn {
-      background-color: #4e73df;
+      background-color: #28a745;
       color: white;
       padding: 12px 25px;
       text-decoration: none;
@@ -93,39 +114,29 @@
       font-size: 1.1rem;
       display: inline-block;
       margin-top: 20px;
-      text-align: center;
     }
 
     #downloadBtn:hover {
-      background-color: #2e59d9;
-    }
-
-    #status {
-      font-size: 1rem;
-      color: #666;
-      margin-top: 20px;
+      background-color: #218838;
     }
   </style>
 </head>
 <body>
-  <h1>AI Business Case Study Generator</h1>
+  <h1>Case Study Generator</h1>
 
-  <!-- INTERVIEW SECTION -->
   <div id="interviewSection">
     <button id="startBtn"><i class="fa fa-microphone"></i></button>
-
-    <div id="status">Initializing...</div>
+    <div id="status">Click the button to start</div>
     <div id="countdown" class="hidden">
       <p class="countdown" id="timer">1:00</p>
     </div>
     <audio id="aiAudio" autoplay></audio>
   </div>
 
-  <!-- CASE STUDY GENERATION SECTION -->
+  <button id="endBtn" class="hidden">End Interview</button>
+
   <div id="caseStudySection" class="hidden">
     <h2>Generate Your Case Study</h2>
-
-    <!-- Color Pickers -->
     <p>Choose Primary Color:</p>
     <input type="color" id="color1" value="#ff0000" /><br>
 
@@ -135,7 +146,6 @@
     <p>Choose Accent Color:</p>
     <input type="color" id="color3" value="#0000ff" /><br>
 
-    <!-- Image Uploads -->
     <p>Upload your company logo (optional):</p>
     <input type="file" id="logoInput" accept="image/*" /><br>
 
@@ -145,6 +155,7 @@
     <p>Upload an additional image:</p>
     <input type="file" id="extraInput" accept="image/*" /><br>
 
+    <!-- Update this with working function if needed -->
     <button onclick="submitLogoAndGenerate()">Generate Case Study</button>
 
     <div id="spinner" class="hidden">

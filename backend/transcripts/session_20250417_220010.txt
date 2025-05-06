@@ -1,3 +1,0 @@
-AI: Hi, and welcome to the AI Case Study Generator. It’s great to have you here. Before we get into the project, I’d love to get to know you a bit first. Can you tell me your name, the company or organization you're representing, your role there, and the kind of project you'd like to generate the case study for?
-USER: Hi.
-AI: Great to have you here! Before we get into the project, I’d love to get to know you a bit first. Can you tell me your name, the company or organization you're representing, your role there, and the kind of project you'd like to generate the case study for?

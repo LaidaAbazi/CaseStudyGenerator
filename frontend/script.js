@@ -6,6 +6,7 @@ let sessionTimeout;
 let userBuffer = "";
 let aiBuffer = "";
 let hasEnded = false;
+let isInstructionsApplied = false;
 
 const audioElement = document.getElementById("aiAudio");
 const startButton = document.getElementById("startBtn");
@@ -37,7 +38,7 @@ STYLE:
 - **Add a little fun**: You can mention you’re “putting on your headphones” or “grabbing your coffee” — something light and playful to keep things friendly and fun.
 - **Make sure this moment feels personal and relaxed**: Let the conversation feel dynamic, like two friends chatting. **Don’t rush into the questions**; ease into it slowly.
 
-→ Once the small talk is flowing, **begin the conversation with background questions**:
+→ Once the small talk is flowing, **begin the conversation with background questions**,(MANDATORY):
 
   - **Ask for their name**: Do it casually.
   - **Who they represent,which company they're working**: Ask who they’re working (company name).
@@ -49,11 +50,11 @@ STYLE:
 -Before moving into the main questions, you must always include the following two elements — every single time:
 
 1. **Set Timing Expectations (MANDATORY)**  
-Say in a warm, human tone that the conversation will only take about 10 minutes and involve just a few questions. You must say this out loud — do not skip it. Use natural, varied phrasing each time.
+Say in a warm, human tone that the conversation will only take about 5 to 10 minutes and involve just a few questions. You must say this out loud — do not skip it. Use natural, varied phrasing each time.
 
 Examples of how to phrase this:
-- “Alright, just so you know, I’d like to let you know that this will take probably only 10 minutes and just a few questions.”
--“Before we begin, I’d like to let you know that this will take probably only 10 minutes and just a few questions.”
+- “Alright, just so you know, this will only take about 5-10 minutes — just a few questions.”
+-“Before we begin, this should take around 5-10 minutes — just a few of questions.”
 
 2. **Give a Hint about Client Involvement (MANDATORY)**  
 After a natural pause, you must give a soft heads-up that their client will be involved later. Don’t explain how yet — just casually mention it so they’re aware.
@@ -141,7 +142,8 @@ CASE STUDY QUESTION FLOW:
 7. **Client Quote**  
    Ask for a strong quote if they have one.
    - “Did the client say anything memorable or give a quote you’d like to include?”
-   - If not, offer help: “Want me to draft one based on our conversation?”
+   - If not, offer help: “Want me to draft one based on our conversation? If so, I’ll show you the quote in the summary at the end — it’s just a starting point and can be edited by you or your client later.”
+
 
 RULES:
 - Only refer to the project/product/solution using the name given in the INTRODUCTION.
@@ -158,34 +160,68 @@ CONTEXTUAL BEHAVIOR:
 
 ENDING:
 
-When the interview is nearly complete and all key project details are gathered, gently shift into wrapping up the conversation. The AI must sound warm, human, and calm — not scripted or rushed. This section must always happen before the conversation ends. Here's how to guide it:
+When the interview is nearly complete and all key project details are gathered, gently shift into wrapping up the conversation. The AI must sound warm, human, and calm — never robotic or rushed. This section is **mandatory** and must always happen before the conversation ends.
 
-1. Begin with a soft, casual transition to signal you're wrapping up — like a friend finishing a great chat:
-   - “Okay, this has been super insightful — I just have one last thing I want to share before we finish.”
-   - “We’re almost done, but before I let you go…”
+Follow these six steps in order, and insert a small pause between each — like you're casually finishing a friendly call.
 
-→ Pause and let the user respond, acknowledge warmly if they say anything.
+---
 
-2. Bring up the client follow-up naturally, like a helpful tip:
-   - “So, here’s something that’ll help wrap the story up beautifully...”
-   - “After this, I’ll create a little link you can send to your client — nothing big.”
+1. **Start Wrap-Up Naturally**  
+Begin with a light, casual transition to signal the conversation is wrapping up.
+Say something like:
+- “Okay, this has been super insightful… I just have one last thing I want to share before we wrap up.”  
+- “We’re almost done — but before I let you go, there’s one more quick thing.”  
+→ *[Pause briefly. Let the user respond if they want to. Acknowledge with warmth.]*
 
-→ Pause again before continuing to keep it relaxed.
+---
 
-3. Explain the purpose of the link and the client’s involvement:
-   - “They’ll hear a short summary of what we discussed… and I’ll ask them a few light follow-ups to add their voice to the case study.”
-   - “It helps round out the story, you know? So we’re not just hearing your side — we get their take too.”
+2. **Mention the Client Involvement**  
+Casually bring up how the client will be invited afterward. For example:
+- “So — just a heads-up — I’ll prepare a little link and share it with you…”  
+- “You’ll be able to forward that to your client when you’re ready.”  
+→ *[Pause briefly after this to keep things relaxed.]*
 
-4. Reassure them about control and edits:
-   - “Of course, you’ll get the full draft after that, with both parts combined.”
-   - “And don’t worry — you’ll have the final say. I’ll send you an editable version to tweak however you like.”
+---
 
-5. End warmly and personally:
-   - “Thanks again for chatting today — this has been genuinely great.”
-   - “I’ll pull together your summary and send it soon. Looking forward to hearing what your client adds too!”
-   - “Talk soon and take care!”
+3. **Explain What the Client Link Does**  
+Describe the purpose of that link:
+- “That link will let them hear a quick summary of our chat…”  
+- “And I’ll ask them just a couple of lightweight follow-ups so they can add their side to the story.”  
+- “Nothing too long — just helps us get their voice in too.”  
+→ *[Let it land. Pause again.]*
 
-→ IMPORTANT: Deliver this over several turns, naturally. Pause between ideas. React to the user’s tone. Never rush. Always include this part — it’s essential for the case study workflow.
+---
+
+4. **Explain the Summary and What Happens Next**  
+Make this feel relaxed and helpful:
+- “Once we’re done here, I’ll write up a little summary of our chat — that usually takes just a couple of minutes…”  
+- “You’ll see it pop up right here on the screen — an editable version of everything we talked about.”  
+- “And there’ll be simple instructions on how to invite your client to that follow-up, if you want to.”  
+→ *[Let the user absorb this.]*
+
+---
+
+5. **Reassure About Control and Edits**  
+Make sure they feel confident and in charge:
+- “After the client finishes their part, you’ll have full control to make edits to anything before it’s finalized.”
+- “Nothing gets sent without your review — and you can tweak it however you like, together with your client.”  
+→ *[Say this warmly, then pause.]*
+
+---
+
+6. **End the Conversation Clearly and Kindly**  
+Finish with a friendly, polite sign-off:
+- “Thanks again for chatting — this was genuinely great.”  
+- “If you’re all good, you can go ahead and click the button to hang up…”  
+- “Alright — talk soon and take care!”  
+→ *[Wait a moment. Then gracefully end the session.]*
+
+---
+
+✔ Keep the flow natural  
+✔ Always pause briefly between these steps  
+✔ Adjust your energy to match the user’s tone  
+✔ Never rush or combine these into one long monologue  
 
 GOAL:
 Create a fully human-feeling interview that captures the user's story in a natural, emotional, and insightful way. Surprise the user with how real and thoughtful the experience felt.
@@ -217,7 +253,7 @@ function endConversation(reason) {
 
   if (sessionTimeout) clearTimeout(sessionTimeout);
   console.log("Conversation ended:", reason);
-  statusEl.textContent = "📄 Interview complete.";
+  statusEl.textContent = "Interview complete";
 
   fetch("/save_transcript", {
     method: "POST",
@@ -233,6 +269,12 @@ function endConversation(reason) {
 
   if (dataChannel) dataChannel.close();
   if (peerConnection) peerConnection.close();
+  const endBtn = document.getElementById("endBtn");
+  if (endBtn) {
+    endBtn.disabled = true;
+    endBtn.textContent = "Interview Ended";
+  }
+
 }
 
 async function initConnection() {
@@ -247,7 +289,18 @@ async function initConnection() {
     peerConnection.addTrack(audioTrack, localStream);
 
     peerConnection.ontrack = (event) => {
-      audioElement.srcObject = event.streams[0];
+      const [remoteStream] = event.streams;
+      const remoteOnly = new MediaStream();
+
+      remoteStream.getAudioTracks().forEach(track => {
+        // Only play tracks that are not the user's mic
+        if (track.kind === "audio" && track.label !== "Microphone") {
+          remoteOnly.addTrack(track);
+        }
+      });
+
+      audioElement.srcObject = remoteOnly;
+
     };
 
     dataChannel = peerConnection.createDataChannel("openai-events");
@@ -287,10 +340,28 @@ function handleMessage(event) {
   switch (msg.type) {
     case "session.created":
       isSessionReady = true;
+
+      // ✅ Send systemInstructions only after session is created
+      dataChannel.send(JSON.stringify({
+        type: "session.update",
+        session: {
+          instructions: systemInstructions,
+          voice: "verse",
+          modalities: ["audio", "text"],
+          input_audio_transcription: { model: "whisper-1" },
+          turn_detection: { type: "server_vad" }
+        }
+      }));
       break;
 
     case "session.updated":
+      // ✅ When instructions are applied, start greeting
+      if (!isInstructionsApplied) {
+        isInstructionsApplied = true;
+        beginGreeting(); // custom function
+      }
       break;
+
 
     case "response.audio_transcript.delta":
       if (msg.delta) {
@@ -355,17 +426,24 @@ function handleMessage(event) {
   }
 }
 
-startButton.onclick = () => {
+startButton.onclick = async () => {
+  if (peerConnection || dataChannel) {
+    alert("Session is already running.");
+    return;
+  }
+
+  // ✅ Now initialize everything only on click
+  await initConnection();
+
   if (!dataChannel) {
     alert("Session is not ready yet. Please wait.");
     return;
   }
 
-  // Disable the start button after it's clicked to prevent multiple clicks
   startButton.disabled = true;
-  statusEl.textContent = "🎤 Interview started...";
+  statusEl.textContent = "Interview started";
+  document.getElementById("endBtn").classList.remove("hidden");
 
-  // Send the greeting once the button is pressed
   const greeting = `
     Hello, this is your AI Case Study Generator. Thanks for joining me today.
   `;
@@ -374,14 +452,13 @@ startButton.onclick = () => {
     type: "session.update",
     session: {
       instructions: systemInstructions,
-      voice: "verse", // You can change the voice as needed
+      voice: "verse",
       modalities: ["audio", "text"],
       input_audio_transcription: { model: "whisper-1" },
-      turn_detection: { type: "server_vad" } // This ensures that the system waits for the user to talk
+      turn_detection: { type: "server_vad" }
     }
   }));
 
-  // Send the greeting to the user after the button is pressed
   dataChannel.send(JSON.stringify({
     type: "response.create",
     response: {
@@ -401,19 +478,43 @@ startButton.onclick = () => {
     }
   }));
 
-  // Send session update with instructions and settings for real-time conversation
-  
-
-  // Start a timer to end the session after 10 minutes if no manual exit is triggered
   sessionTimeout = setTimeout(() => {
     endConversation("⏱️ 10-minute limit reached.");
   }, 10 * 60 * 1000);
 };
 
+function beginGreeting() {
+  statusEl.textContent = "Interview started";
+
+  const greeting = `
+    Hello, this is your AI Case Study Generator. Thanks for joining me today.
+  `;
+
+  dataChannel.send(JSON.stringify({
+    type: "response.create",
+    response: {
+      modalities: ["audio", "text"],
+      input: [
+        {
+          type: "message",
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: greeting.trim()
+            }
+          ]
+        }
+      ]
+    }
+  }));
+
+  
+}
 
 
 
-initConnection();
+
 
 function showEditableSmartSyncUI(summaryText, originalNames) {
   const container = document.createElement("div");
@@ -428,59 +529,73 @@ function showEditableSmartSyncUI(summaryText, originalNames) {
 
   // Ensure original names are fallback-safe
   const nameMap = {
-    lead_entity: originalNames.lead_entity || "",
-    partner_entity: originalNames.partner_entity || "",
-    project_title: originalNames.project_title || ""
+    "Solution Provider": originalNames.lead_entity || "",
+    "Client": originalNames.partner_entity || "",
+    "Project": originalNames.project_title || ""
   };
+  
+  
   
   
 
   const inputs = {};
   const labelStyle = "display:block;margin-top:10px;font-weight:bold";
 
-  for (const key in nameMap) {
+  for (const labelText in nameMap) {
     const label = document.createElement("label");
-    label.textContent = `${key.charAt(0).toUpperCase() + key.slice(1)}:`;
+    label.textContent = labelText + ":";
     label.setAttribute("style", labelStyle);
-
+  
     const input = document.createElement("input");
     input.type = "text";
-    input.value = nameMap[key];
+    input.value = nameMap[labelText];
     input.style.marginBottom = "10px";
     input.style.width = "100%";
-    inputs[key] = input;
-
+    inputs[labelText] = input;
+  
     container.appendChild(label);
     container.appendChild(input);
   }
+  
 
   // ✅ FIXED Apply Button
   const applyChangesBtn = document.createElement("button");
-  applyChangesBtn.textContent = "🔄 Apply Name Changes";
+  applyChangesBtn.textContent = " Apply Name Changes";
   applyChangesBtn.style.marginTop = "10px";
   applyChangesBtn.onclick = () => {
     let updatedText = textarea.value;
-
-    for (const key in nameMap) {
-      const original = nameMap[key];
-      const current = inputs[key].value.trim();
-
-      // Skip if same
-      if (original === current || !original) continue;
-
-      // Escape special characters for safe RegExp
-      const escapedOriginal = original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const safeRegex = new RegExp(escapedOriginal, "g");
-
-      updatedText = updatedText.replace(safeRegex, current);
-      nameMap[key] = current; // Update map
+  
+    for (const labelText in nameMap) {
+      const original = nameMap[labelText];
+      const current = inputs[labelText].value.trim();
+  
+      if (!original || original === current) continue;
+  
+      // More robust: match quotes, apostrophes, capitalization, possessives
+      const variants = [
+        original,
+        `"${original}"`, `'${original}'`,
+        original.toLowerCase(), original.toUpperCase(),
+        original.replace(/’/g, "'"),  // smart quote to normal
+        original + "'s",              // possessive
+        original + "’s"
+      ];
+  
+      variants.forEach(variant => {
+        const escaped = variant.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(escaped, "gi");
+        updatedText = updatedText.replace(regex, current);
+      });
+  
+      nameMap[labelText] = current;
     }
-
+  
     textarea.value = updatedText;
   };
+  
 
   const finalizeBtn = document.createElement("button");
-finalizeBtn.textContent = "📄 Generate Case Study PDF";
+finalizeBtn.textContent = "Generate Case Study PDF";
 finalizeBtn.style.marginLeft = "10px";
 finalizeBtn.onclick = async () => {
   const finalText = textarea.value;
@@ -540,10 +655,10 @@ function showCaseStudyControls() {
   controlsDiv.style.marginTop = "2rem";
 
   const generateBtn = document.createElement("button");
-  generateBtn.textContent = "📝 Generate Summary";
+  generateBtn.textContent = " Generate Summary";
   generateBtn.onclick = async () => {
     generateBtn.disabled = true;
-    generateBtn.textContent = "⏳ Generating...";
+    generateBtn.textContent = " Generating...";
 
     const formattedTranscript = transcriptLog
       .map(e => `${e.speaker.toUpperCase()}: ${e.text}`)
@@ -564,12 +679,19 @@ function showCaseStudyControls() {
     }
 
     generateBtn.disabled = false;
-    generateBtn.textContent = "📝 Generate Summary";
+    generateBtn.textContent = " Generate Summary";
   };
+
 
   controlsDiv.appendChild(generateBtn);
   document.body.appendChild(controlsDiv);
 }
-
-
+document.addEventListener("DOMContentLoaded", () => {
+  const endBtn = document.getElementById("endBtn");
+  if (endBtn) {
+    endBtn.addEventListener("click", () => {
+      endConversation("🛑 Manual end by user.");
+    });
+  }
+});
 

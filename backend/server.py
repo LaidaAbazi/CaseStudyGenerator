@@ -33,37 +33,35 @@ def clean_text(text):
     )
 
 def extract_names_from_case_study(text):
+    # normalize dashes
     text = text.replace("—", "-").replace("–", "-")
+    lines = text.splitlines()
+    if lines:
+        first = lines[0].strip()
+        # strip markdown bold if present
+        if first.startswith("**") and first.endswith("**"):
+            first = first[2:-2].strip()
 
-    # Try to extract from explicit identifiers first
-    id_block = re.search(r"\[IDENTIFIERS\](.*?)\[/IDENTIFIERS\]", text, re.DOTALL)
-    if id_block:
-        block = id_block.group(1)
-        lead = re.search(r"Solution Provider:\s*(.+)", block)
-        collab = re.search(r"Collaborator:\s*(.+)", block)
-        project = re.search(r"Project:\s*(.+)", block)
-        return {
-            "lead_entity": lead.group(1).strip() if lead else "Unknown",
-            "partner_entity": collab.group(1).strip() if collab else "",
-            "project_title": project.group(1).strip() if project else "Unknown Project"
-        }
+        # now expect "Provider x Client: Project Name"
+        if ":" in first:
+            left, proj = first.split(":", 1)
+            proj = proj.strip()
+            if " x " in left:
+                provider, client = left.split(" x ", 1)
+            else:
+                provider, client = left.strip(), ""
+            return {
+                "lead_entity": provider.strip() or "Unknown",
+                "partner_entity": client.strip(),
+                "project_title": proj or "Unknown Project"
+            }
 
-    # Fallback to title line parsing
-    pattern = r"(?i)^([A-Z][\w\s&.-]+?)\s*(?:x\s*([A-Z][\w\s&.-]+?))?\s*[:：-]\s*(.+?)\n"
-    match = re.search(pattern, text, re.MULTILINE)
-    if match:
-        return {
-            "lead_entity": match.group(1).strip(),
-            "partner_entity": match.group(2).strip() if match.group(2) else "",
-            "project_title": match.group(3).strip()
-        }
-
+    # fallback to old logic (if you really need it)
     return {
         "lead_entity": "Unknown",
         "partner_entity": "",
         "project_title": "Unknown Project"
     }
-
 
 
 @app.route("/")
@@ -78,7 +76,7 @@ def create_session():
     }
     data = {
         "model": "gpt-4o-realtime-preview-2024-12-17",
-        "voice": "coral"
+        "voice": "verse"
     }
     response = requests.post("https://api.openai.com/v1/realtime/sessions", headers=headers, json=data)
     return jsonify(response.json())
@@ -129,123 +127,80 @@ def generate_summary():
 
         # Same prompt as before
         prompt = f"""
-You are a professional case study writer. Your task is to generate a **rich, detailed, brand-style case study** from the transcript of a human voice interview. The final case study should read like a real success story published by a modern brand (like Spotify, Chipotle, or Taylor Guitars).
+You are a professional case study writer. Your job is to generate a **rich, structured, human-style business case study** from a transcript of a real voice interview.
+
+This is an **external project**: the speaker is the solution provider describing a project they delivered to a client. Your task is to write a clear, emotionally intelligent case study from their perspective—based **ONLY** on what’s in the transcript.
 
 ---
 
-🎯 FIRST: DETERMINE THE CONTEXT TYPE
+❌ **DO NOT INVENT ANYTHING**  
+- Do NOT fabricate dialogue or add made-up details  
+- Do NOT simulate the interview format  
+- Do NOT assume or imagine info not explicitly said  
 
-Based on the transcript, decide whether the story is:
-1. An **Internal initiative** (built for the speaker's own team/org, internal process, academic project, nonprofit, or startup journey)
-2. An **External collaboration** (delivered to a client, partner, customer, or public audience)
+✅ **USE ONLY what’s really in the transcript.** If a piece of information (like a client quote) wasn’t provided, **craft** a brief, realistic-sounding quote that captures the client’s sentiment based on what they did say.
 
-Use clear signals in the transcript (e.g., “client,” “internal team,” “partner,” “we built it for them,” etc.) to determine which format to follow. If unclear, default to **internal**.
+---
+
+### ✍️ CASE STUDY STRUCTURE (MANDATORY)
+
+**Title** (first line only—no extra formatting):  
+Format: **[Solution Provider] x [Client]: [Project or Outcome]**
 
 ---
 
-## ✍️ SHARED WRITING INSTRUCTIONS
-
-- **DO NOT invent or assume facts**. Use only what’s present in the transcript.
-- The writing should feel like a human wrote it — vivid, emotionally intelligent, professional, and not robotic or templated.
-- Stay true to the interviewee’s tone. Mirror casual or serious energy. Echo their expressions and voice when possible.
-- Tell the full story: where things started, what changed, what was delivered, and why it mattered.
-- Use real business or project language if the speaker did — otherwise keep it simple and clear.
-- You may structure your story in **paragraph sections** with headings or blocks — but the tone should remain fluent and easy to read.
+**Hero Paragraph (no header)**  
+3–4 sentences introducing the client, their industry, and their challenge; then introduce the provider and summarize the delivery.
 
 ---
----
-📌 STRUCTURED IDENTIFIERS
-
-In addition to writing the full case study, return the **true values** for:
-
-- Solution Provider (who built the solution)
-- Collaborator or Client (who the project was for)
-- Project Name or Outcome (short label for the work done)
-
-
-→ These values must be short and accurate names, NOT descriptions or industries.
-→ Do NOT make them up. Use what the speaker said.
-→ Only fill Collaborator if it’s an external story.
-
-## 🔁 CASE STUDY FORMAT: INTERNAL INITIATIVE
-
-**Title:**  
-Format: [Team/Org] x [Dept/Audience]: [Project Name]  
-Example: StudioOps x Product Team: Simplifying Asset Reviews at Scale
-
-**Hero Paragraph (Intro without a header):**  
-Open with a high-level narrative hook: What was the team trying to do? What problem or ambition kicked this off? Mention their mission or values if shared. Make it sound like a brand story.
 
 **Section 1 – The Challenge**  
-- What was broken or inefficient before?  
-- Was there a specific moment or trigger to start this initiative?  
-- Why now? What was at stake?
-
-**Section 2 – The Solution**  
-- What was built, changed, or reimagined?  
-- Break the solution into components if needed (tool, process, system, design, etc.)  
-- Highlight clever decisions, technical wins, or any improvisation that made it work
-
-**Section 3 – The Impact**  
-- What changed internally?  
-- Time savings, culture shifts, clarity, reduced friction, better output, team alignment — anything real  
-- Add real metrics if mentioned (e.g. “Saved 8 hours per week per team,” “Cut cycle time by 40%,” etc.)
-
-**Section 4 – Reflection (Optional but recommended)**  
-- What did the team learn? What was meaningful about this work?  
-- Include a quote if the speaker reflected emotionally or strategically.
-
-**Closing:**  
-End with a confident wrap-up. Show pride, future intent, or advice. Keep it grounded in what was actually said.
+- What problem was the client solving?  
+- Why was it important?  
+- Any context on scale, goals, or mission
 
 ---
 
-## 🤝 CASE STUDY FORMAT: EXTERNAL COLLABORATION
-
-**Title:**  
-Format: [Solution Provider] x [Client Name]: [Project or Outcome]  
-Example: BrightCloud x EcoFoods: Transforming Farm Data Into Daily Insights
-
-**Hero Paragraph (Intro without a header):**  
-Open with a brief description of the client and their industry, followed by the challenge or opportunity they faced. Then introduce the speaker’s company and the solution they provided.
-
-**Section 1 – The Challenge**  
-- What was the client trying to solve, improve, or unlock?  
-- What made this moment urgent or important?  
-- Was the old solution broken? Were they trying something new?
-
 **Section 2 – The Solution**  
-- Describe what was delivered: product, service, strategy, campaign, system  
-- Break it down into digestible parts  
-- Mention any collaboration moments, pivots, clever fixes, personalization, or innovation
-
-**Section 3 – The Results**  
-- What changed for the client? Include both qualitative and quantitative outcomes  
-- Use bullet-point KPIs (if provided), like:  
-  • 40% faster onboarding  
-  • 53% increase in engagement  
-  • $1M in new revenue  
-- Highlight client satisfaction, feedback, or repeat business
-
-**Section 4 – The Relationship**  
-- How did the collaboration feel?  
-- Were there standout moments, tough obstacles, or a moment of pride?  
-- Include a quote if the speaker shared one from the client — otherwise create a natural-sounding one based on their words
-
-**Closing:**  
-Conclude by showing why this project was meaningful to the speaker’s team — and what others might learn from it.
+- Describe the delivered product/service/strategy  
+- Break down key components and clever features
 
 ---
 
-🏁 Final Goal:
+**Section 3 – Implementation & Collaboration**  
+- How was it rolled out?  
+- What was the teamwork like?  
+- Any turning points or lessons learned
 
-Generate a story-rich, emotionally compelling, and clearly structured case study that reflects the **real journey and voice** of the speaker. Use natural language, adapt your phrasing based on tone, and emphasize clarity, results, and insight.
+---
 
-Be specific. Be human. Be faithful to the transcript.
+**Section 4 – Results & Impact**  
+- What changed for the client?  
+- Include any real metrics (e.g., “40% faster onboarding”)  
+- Mention qualitative feedback if shared
+
+---
+
+**Section 5 – Client Quote**  
+- If the transcript contains a **direct, verbatim quote** from the client or solution provider, include it as spoken.  
+- If no direct quote is present, compose **one elegant sentence** in quotation marks from the client’s or provider’s perspective. Use only language, tone, and key points found in the transcript to craft a testimonial that feels genuine, highlights the solution’s impact, and reads like a professional endorsement.
+
+---
+
+**Section 6 – Reflections & Closing**  
+- What did this mean for the provider’s team?  
+- End with a warm, forward-looking sentence.
+
+---
+
+🎯 **GOAL:**  
+A vivid, accurate, human-sounding case study grounded entirely in the transcript.
 
 Transcript:
 {transcript}
 """
+
+
 
 
         headers = {
