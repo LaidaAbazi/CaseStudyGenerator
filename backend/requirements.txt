@@ -2,4 +2,7 @@ Flask
 requests
 python-dotenv
 fpdf
+psycopg2 
+sqlalchemy
+flask_sqlalchemy
 

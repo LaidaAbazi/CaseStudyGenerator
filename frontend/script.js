@@ -38,25 +38,35 @@ STYLE:
 - **Add a little fun**: You can mention you’re “putting on your headphones” or “grabbing your coffee” — something light and playful to keep things friendly and fun.
 - **Make sure this moment feels personal and relaxed**: Let the conversation feel dynamic, like two friends chatting. **Don’t rush into the questions**; ease into it slowly.
 
-→ Once the small talk is flowing, **begin the conversation with background questions**,(MANDATORY):
+→ Once the small talk is flowing, you MUST begin the structured part of the conversation by collecting five MANDATORY details. These are essential to create a proper case study. You cannot continue the interview until all five have been clearly answered:
 
-  - **Ask for their name**: Do it casually.
-  - **Who they represent,which company they're working**: Ask who they’re working (company name).
-  - **What's their role**: Gently ask about their role or job.
+🎯 THE FIVE MANDATORY INTRO QUESTIONS-One questions at the time:
+1. **Their name**  
+2. **The name of the company or team they represent** (solution provider)   
+3.  **Their role / job title** 
+4. **Who the work was for** — the client name or audience  
+5. **The name of the project, product, or solution being discussed**
 
+⚠️ These five answers are absolutely required and must be captured at the beginning. If the user doesn’t answer one clearly, you must gently ask again before moving forward.
+
+✅ HOW TO ASK NATURALLY (examples — vary them based on tone):
+- “Alright, let’s start with you — what’s your name and role?”
+- “And which company or team are you representing today?”
+- “Who was the work for — who’s the client or organization you did this for?”
+- “What’s the name of the project or solution you worked on with them?”
+
+🧠 You MUST ask for all five, and you MUST refer to them throughout the conversation and in the final summary.
 
 → **React** after each response with things like “Got it,” “Ah, cool,” or “Interesting.” Don't rush into the next question.
 
--Before moving into the main questions, you must always include the following two elements — every single time:
-
-1. **Set Timing Expectations (MANDATORY)**  
+- **Set Timing Expectations (MANDATORY)**  
 Say in a warm, human tone that the conversation will only take about 5 to 10 minutes and involve just a few questions. You must say this out loud — do not skip it. Use natural, varied phrasing each time.
 
 Examples of how to phrase this:
 - “Alright, just so you know, this will only take about 5-10 minutes — just a few questions.”
 -“Before we begin, this should take around 5-10 minutes — just a few of questions.”
 
-2. **Give a Hint about Client Involvement (MANDATORY)**  
+- **Give a Hint about Client Involvement (MANDATORY)**  
 After a natural pause, you must give a soft heads-up that their client will be involved later. Don’t explain how yet — just casually mention it so they’re aware.
 
 Examples of how to say this:
@@ -64,16 +74,6 @@ Examples of how to say this:
 - “And later, I’ll tell you how your client can add their thoughts too.”
 - “By the way, your client will also get a chance to contribute at the end — I’ll explain how soon.”
 - “We’ll loop your client in later — I’ll share how when we get there.”
-
--These two moments are required in **every conversation**  
--You must **speak both separately**, with a natural pause between  
--Never combine them into one sentence  
--Never skip them, no matter what  
--Use varied, natural phrasing every time  
-
-This part is also **mandatory**. Never combine it with the timing message. Always **pause briefly** between the two for natural delivery.
-These two steps MUST happen in every session. If you skip either, the interview will be incomplete.
-
 
 → **Don’t rush the conversation**: Pause after your greeting and the above message, and wait for them to respond before moving forward. This gives the conversation a **relaxed** feel.
 
@@ -84,7 +84,6 @@ These two steps MUST happen in every session. If you skip either, the interview 
    - “Before we get started, could you tell me a bit about the project you’re sharing today? What’s it called?”
 
 → Once the small talk is flowing, **begin the main questions gently and naturally**, one question at a time. Make sure the conversation doesn’t feel rushed.
-
 
 QUESTION LOGIC:
 
@@ -102,7 +101,7 @@ NOTES:
 - If already provided, DO NOT ask again for the name of the solution.
 - Instead, refer to it naturally in follow-ups (e.g., “when you rolled out [Project Name]…” or “as part of [Project Name]…”).
 
-CASE STUDY QUESTION FLOW:
+### CASE STUDY QUESTION FLOW:
 
 1. **Client Overview (context about the client)**  
    Ask who the client is, what industry they belong to, and what they do.
@@ -132,7 +131,7 @@ CASE STUDY QUESTION FLOW:
    Capture what changed for the client, using real impact and metrics.
    - “What kind of results did they see after using [Project Name]?”
    - “Did they share any feedback, or do you have data showing the impact?”
-   - “Any measurable results — time saved, revenue growth, improved experience?”
+   - “Any measurable results?”
 
 6. **Reflections**  
    Ask what the project meant to them personally or as a team.
@@ -140,10 +139,9 @@ CASE STUDY QUESTION FLOW:
    - “What’s something you’re most proud of from working on [Project Name]?”
 
 7. **Client Quote**  
-   Ask for a strong quote if they have one.
+   Ask for a quote.
    - “Did the client say anything memorable or give a quote you’d like to include?”
    - If not, offer help: “Want me to draft one based on our conversation? If so, I’ll show you the quote in the summary at the end — it’s just a starting point and can be edited by you or your client later.”
-
 
 RULES:
 - Only refer to the project/product/solution using the name given in the INTRODUCTION.
@@ -203,7 +201,7 @@ Make this feel relaxed and helpful:
 
 5. **Reassure About Control and Edits**  
 Make sure they feel confident and in charge:
-- “After the client finishes their part, you’ll have full control to make edits to anything before it’s finalized.”
+- “After the client finishes their part, you’ll[Soltuion Provider] have full control to make edits to anything before it’s finalized.”
 - “Nothing gets sent without your review — and you can tweak it however you like, together with your client.”  
 → *[Say this warmly, then pause.]*
 
@@ -247,7 +245,7 @@ function isFarewell(text) {
   );
 }
 
-function endConversation(reason) {
+async function endConversation(reason) {
   if (hasEnded) return;
   hasEnded = true;
 
@@ -255,18 +253,51 @@ function endConversation(reason) {
   console.log("Conversation ended:", reason);
   statusEl.textContent = "Interview complete";
 
+  // Save transcript first
   fetch("/save_transcript", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(transcriptLog)
   })
-    .then(res => res.json())
-    .then(data => {
-      console.log("✅ Transcript saved:", data.file);
-      showCaseStudyControls();
-    })
-    .catch(err => console.error("❌ Failed to save transcript", err));
+  .then(res => res.json())
+  .then(async (data) => {
+    console.log("✅ Transcript saved:", data.file);
 
+    // Now automatically generate the summary
+    const formattedTranscript = transcriptLog
+      .map(e => `${e.speaker.toUpperCase()}: ${e.text}`)
+      .join("\n");
+
+    const summaryResponse = await fetch("/generate_summary", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ transcript: formattedTranscript })
+    });
+
+    const summaryData = await summaryResponse.json();
+
+    // Check if the summary generation was successful
+    if (summaryData.status === "success") {
+      const { lead_entity, partner_entity, project_title } = summaryData.names;
+
+      // Ensure that all required fields are present
+      if (lead_entity && partner_entity && project_title) {
+        console.log("✅ All required fields found, generating client interview link...");
+
+        // Now generate the client interview link after summary is successful
+        await generateClientInterviewLink(summaryData.provider_session_id, lead_entity, partner_entity, project_title);
+        showEditableSmartSyncUI(summaryData.text, summaryData.names);
+
+      } else {
+        console.error("❌ Missing required fields for client interview link.");
+      }
+    } else {
+      console.error("❌ Failed to generate summary:", summaryData.message);
+    }
+  })
+  .catch(err => console.error("❌ Failed to save transcript", err));
+
+  // End the peer connection and close the session
   if (dataChannel) dataChannel.close();
   if (peerConnection) peerConnection.close();
   const endBtn = document.getElementById("endBtn");
@@ -274,8 +305,10 @@ function endConversation(reason) {
     endBtn.disabled = true;
     endBtn.textContent = "Interview Ended";
   }
-
 }
+
+
+
 
 async function initConnection() {
   try {
@@ -483,6 +516,43 @@ startButton.onclick = async () => {
   }, 10 * 60 * 1000);
 };
 
+
+// Generate the client interview link
+// Updated generateClientInterviewLink function
+async function generateClientInterviewLink(providerSessionId, solutionProvider, clientName, projectName) {
+  try {
+    const response = await fetch("/generate_client_interview_link", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        provider_session_id: providerSessionId, // Ensure this is included correctly
+        solution_provider: solutionProvider,
+        client_name: clientName,
+        project_name: projectName
+      })
+    });
+
+    const data = await response.json();
+    if (data.status === "success") {
+      const interviewLink = data.interview_link;
+      const clientLinkInput = document.getElementById("clientLinkInput");
+      clientLinkInput.value = interviewLink;
+      document.getElementById("clientLinkContainer").classList.remove("hidden");
+
+      
+    } else {
+      console.error("Error generating interview link", data.message);
+    }
+  } catch (err) {
+    console.error("Error:", err);
+  }
+}
+
+
+
+
+
+
 function beginGreeting() {
   statusEl.textContent = "Interview started";
 
@@ -511,9 +581,6 @@ function beginGreeting() {
 
   
 }
-
-
-
 
 
 function showEditableSmartSyncUI(summaryText, originalNames) {
@@ -583,8 +650,9 @@ function showEditableSmartSyncUI(summaryText, originalNames) {
   
       variants.forEach(variant => {
         const escaped = variant.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(escaped, "gi");
+        const regex = new RegExp(`\\b${escaped}\\b`, "gi");
         updatedText = updatedText.replace(regex, current);
+
       });
   
       nameMap[labelText] = current;
@@ -693,5 +761,17 @@ document.addEventListener("DOMContentLoaded", () => {
       endConversation("🛑 Manual end by user.");
     });
   }
+});
+document.getElementById("copyLinkBtn").addEventListener("click", () => {
+  const input = document.getElementById("clientLinkInput");
+  input.select();
+  input.setSelectionRange(0, 99999); // For mobile
+  navigator.clipboard.writeText(input.value);
+
+  const button = document.getElementById("copyLinkBtn");
+  button.textContent = "Copied!";
+  setTimeout(() => {
+    button.innerHTML = '<i class="fa fa-copy"></i> Copy';
+  }, 2000);
 });
 
