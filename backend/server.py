@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from fpdf import FPDF
 import re
 import uuid
+import json
 
 load_dotenv()
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
@@ -21,10 +22,22 @@ openai_config = {
 }
 
 # Mock database to store solution provider and client data
-mock_db = {
-    "solution_provider_sessions": {},  # Store solution provider sessions
-    "client_sessions": {}             # Store client session links
-}
+SESSIONS_FILE = "sessions.json"
+
+def load_sessions():
+    if os.path.exists(SESSIONS_FILE):
+        with open(SESSIONS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    else:
+        return {"solution_provider_sessions": {}, "client_sessions": {}}
+
+def save_sessions(data):
+    with open(SESSIONS_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+
+# Replace mock_db with file-based version
+mock_db = load_sessions()
+
 
 
 
@@ -298,6 +311,7 @@ def store_solution_provider_session(provider_session_id, cleaned_case_study):
     }
 
     print("Provider Sessions after storing:", mock_db["solution_provider_sessions"])  # Debugging line
+    save_sessions(mock_db)
 
 
 def create_client_session(provider_session_id):
@@ -317,7 +331,10 @@ def create_client_session(provider_session_id):
     print(f"Client session {token} created and linked to provider session {provider_session_id}")  # Debugging line
     print("Current client sessions:", mock_db["client_sessions"])  # Debugging line
 
+    save_sessions(mock_db)
     return token
+    
+
 
 
 @app.route("/client-interview/<token>", methods=["GET"])
@@ -335,6 +352,8 @@ def client_interview(token):
 
         # Mark the client session as used (to prevent reuse)
         session_link["used"] = True
+        save_sessions(mock_db)
+
 
         # Retrieve provider name, client name, project name, and the solution provider's summary
         provider_name = provider_session.get("provider_name", "Unknown Provider")
