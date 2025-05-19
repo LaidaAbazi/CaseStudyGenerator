@@ -14,6 +14,10 @@ const statusEl = document.getElementById("status");
 
 const farewellPhrases = ["goodbye", "see you", "talk to you later", "i have to go"];
 
+let provider_name = "";
+let client_name = "";
+let project_name = "";
+
 function isFarewell(text) {
   const cleaned = text.toLowerCase().trim();
   return farewellPhrases.some(phrase =>
@@ -45,6 +49,9 @@ async function fetchClientSessionData(token) {
   }
 }
 
+// ✅ This is the new logic to be added to the CLIENT interview JS for saving transcript and generating summary
+// This mirrors the logic from the solution provider interview
+
 async function endConversation(reason) {
   if (hasEnded) return;
   hasEnded = true;
@@ -53,10 +60,62 @@ async function endConversation(reason) {
   console.log("Conversation ended:", reason);
   statusEl.textContent = "Interview complete";
 
+  // ✅ Save CLIENT transcript
+  fetch(`/save_client_transcript?token=${getClientTokenFromURL()}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(transcriptLog)
+  })
+  .then(res => res.json())
+  .then(async (data) => {
+    console.log("✅ Client transcript saved:", data.file);
+
+    // ✅ Generate CLIENT summary
+    const formattedTranscript = transcriptLog
+      .map(e => `${e.speaker.toUpperCase()}: ${e.text}`)
+      .join("\n");
+
+    const token = getClientTokenFromURL();
+    
+
+    const summaryResponse = await fetch(`/generate_client_summary?token=${token}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ transcript: formattedTranscript })
+    });
+
+ 
+
+    const summaryData = await summaryResponse.json();
+
+    if (summaryData.status === "success") {
+      showEditableSmartSyncUI(summaryData.text, {
+        lead_entity: provider_name,
+        partner_entity: client_name,
+        project_title: project_name
+      });
+    } else {
+      console.error("❌ Failed to generate client summary:", summaryData.message);
+    }
+  })
+  .catch(err => console.error("❌ Failed to save client transcript", err));
+
+  // ✅ Clean up WebRTC
   if (dataChannel) dataChannel.close();
   if (peerConnection) peerConnection.close();
   document.getElementById("endBtn").disabled = true;
 }
+
+// ✅ Triggered from End button for client interview
+document.addEventListener("DOMContentLoaded", () => {
+  const endBtn = document.getElementById("endBtn");
+  if (endBtn) {
+    endBtn.addEventListener("click", () => {
+      endConversation("🛑 Manual end by client user.");
+    });
+  }
+});
+
 
 async function initConnection(clientInstructions, clientGreeting) {
     try {
@@ -179,6 +238,124 @@ function handleMessage(event) {
   }
 }
 
+function showEditableSmartSyncUI(summaryText, originalNames) {
+  const container = document.createElement("div");
+  container.id = "caseStudyEditor";
+  container.style.marginTop = "2rem";
+
+  const textarea = document.createElement("textarea");
+  textarea.id = "editableCaseStudy";
+  textarea.style.width = "100%";
+  textarea.style.height = "600px";
+  textarea.value = summaryText;
+
+  const nameMap = {
+    "Solution Provider": originalNames.lead_entity || "",
+    "Client": originalNames.partner_entity || "",
+    "Project": originalNames.project_title || ""
+  };
+
+  const inputs = {};
+  const labelStyle = "display:block;margin-top:10px;font-weight:bold";
+
+  for (const labelText in nameMap) {
+    const label = document.createElement("label");
+    label.textContent = labelText + ":";
+    label.setAttribute("style", labelStyle);
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = nameMap[labelText];
+    input.style.marginBottom = "10px";
+    input.style.width = "100%";
+    inputs[labelText] = input;
+
+    container.appendChild(label);
+    container.appendChild(input);
+  }
+
+  const applyChangesBtn = document.createElement("button");
+  applyChangesBtn.textContent = "Apply Name Changes";
+  applyChangesBtn.style.marginTop = "10px";
+  applyChangesBtn.onclick = () => {
+    let updatedText = textarea.value;
+
+    for (const labelText in nameMap) {
+      const original = nameMap[labelText];
+      const current = inputs[labelText].value.trim();
+
+      if (!original || original === current) continue;
+
+      const variants = [
+        original,
+        `"${original}"`, `'${original}'`,
+        original.toLowerCase(), original.toUpperCase(),
+        original.replace(/’/g, "'"),
+        original + "'s", original + "’s"
+      ];
+
+      variants.forEach(variant => {
+        const escaped = variant.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`\\b${escaped}\\b`, "gi");
+        updatedText = updatedText.replace(regex, current);
+      });
+
+      nameMap[labelText] = current;
+    }
+
+    textarea.value = updatedText;
+  };
+
+  const finalizeBtn = document.createElement("button");
+  finalizeBtn.textContent = "Generate Case Study PDF";
+  finalizeBtn.style.marginLeft = "10px";
+  finalizeBtn.onclick = async () => {
+    const finalText = textarea.value;
+    const res = await fetch("/finalize_pdf", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: finalText })
+    });
+    const result = await res.json();
+    if (result.status === "success") {
+      const downloadBtn = document.createElement("button");
+      downloadBtn.textContent = "📥 Download Case Study PDF";
+      downloadBtn.style.marginTop = "10px";
+      downloadBtn.style.padding = "10px 20px";
+      downloadBtn.style.fontSize = "16px";
+      downloadBtn.style.fontWeight = "bold";
+      downloadBtn.style.backgroundColor = "#007bff";
+      downloadBtn.style.color = "white";
+      downloadBtn.style.border = "none";
+      downloadBtn.style.borderRadius = "5px";
+      downloadBtn.style.cursor = "pointer";
+
+      downloadBtn.addEventListener('mouseover', () => {
+        downloadBtn.style.backgroundColor = "#0056b3";
+      });
+      downloadBtn.addEventListener('mouseout', () => {
+        downloadBtn.style.backgroundColor = "#007bff";
+      });
+
+      downloadBtn.addEventListener('click', () => {
+        const link = document.createElement("a");
+        link.href = result.pdf_url;
+        link.download = "case_study.pdf";
+        link.click();
+      });
+
+      container.appendChild(downloadBtn);
+    } else {
+      alert("❌ PDF generation failed: " + result.message);
+    }
+  };
+
+  container.appendChild(textarea);
+  container.appendChild(applyChangesBtn);
+  container.appendChild(finalizeBtn);
+  document.body.appendChild(container);
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   const token = getClientTokenFromURL();
   if (!token) return;
@@ -186,8 +363,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const sessionData = await fetchClientSessionData(token);
   if (!sessionData) return;
 
-  const { provider_name, client_name, project_name, provider_summary } = sessionData;
-
+  provider_name = sessionData.provider_name;
+  client_name = sessionData.client_name;
+  project_name = sessionData.project_name;
+  
   const clientInstructions = `
 INSTRUCTIONS:
 You are an emotionally intelligent, warm, and slightly witty AI interviewer who behaves like a real human podcast host. You're here to chat with the **client** about the project "${project_name}" delivered to them by **${provider_name}**. You should sound **curious**, **casual**, and **engaged** — like someone genuinely interested in hearing their side of the story.

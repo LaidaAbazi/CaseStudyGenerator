@@ -285,7 +285,7 @@ async function endConversation(reason) {
         console.log("✅ All required fields found, generating client interview link...");
 
         // Now generate the client interview link after summary is successful
-        await generateClientInterviewLink(summaryData.provider_session_id, lead_entity, partner_entity, project_title);
+        await generateClientInterviewLink(summaryData.case_study_id, lead_entity, partner_entity, project_title);
         showEditableSmartSyncUI(summaryData.text, summaryData.names);
 
       } else {
@@ -519,13 +519,13 @@ startButton.onclick = async () => {
 
 // Generate the client interview link
 // Updated generateClientInterviewLink function
-async function generateClientInterviewLink(providerSessionId, solutionProvider, clientName, projectName) {
+async function generateClientInterviewLink(caseStudyId, solutionProvider, clientName, projectName) {
   try {
     const response = await fetch("/generate_client_interview_link", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        provider_session_id: providerSessionId, // Ensure this is included correctly
+        case_study_id: caseStudyId, // Ensure this is included correctly
         solution_provider: solutionProvider,
         client_name: clientName,
         project_name: projectName
@@ -547,10 +547,6 @@ async function generateClientInterviewLink(providerSessionId, solutionProvider, 
     console.error("Error:", err);
   }
 }
-
-
-
-
 
 
 function beginGreeting() {
@@ -774,4 +770,3 @@ document.getElementById("copyLinkBtn").addEventListener("click", () => {
     button.innerHTML = '<i class="fa fa-copy"></i> Copy';
   }, 2000);
 });
-
