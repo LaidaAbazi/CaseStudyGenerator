@@ -174,7 +174,7 @@ def generate_summary():
         ### ✍️ CASE STUDY STRUCTURE (MANDATORY)
 
         **Title** (first line only—no extra formatting):  
-        Format: **[Solution Provider] x [Client]: [Project or Outcome]**
+        Format: **[Solution Provider] x [Client]: [Project/product/service/strategy]**
 
         --- 
 
@@ -236,9 +236,7 @@ def generate_summary():
 
         payload = {
             "model": openai_config["model"],
-            "messages": [
-                {"role": "system", "content": prompt},
-            ],
+            "messages": [{"role": "system", "content": prompt}],
             "temperature": openai_config["temperature"],
             "top_p": openai_config["top_p"],
             "presence_penalty": openai_config["presence_penalty"],
@@ -248,33 +246,73 @@ def generate_summary():
         response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
         result = response.json()
         case_study = result["choices"][0]["message"]["content"]
-        cleaned_case_study = clean_text(case_study)
+        cleaned = clean_text(case_study)
+        names = extract_names_from_case_study(cleaned)
+        # First save to DB and get case_study_id
+        provider_session_id = str(uuid.uuid4())  # 🔁 Generate a session ID now
+        case_study_id = store_solution_provider_session(provider_session_id, cleaned)
 
-        extracted_names = extract_names_from_case_study(cleaned_case_study)
-
-        # Generate the provider session ID (this is where you generate a UUID)
-        provider_session_id = str(uuid.uuid4())
-        case_study_id = store_solution_provider_session(provider_session_id, cleaned_case_study)
-        client_token = create_client_session(case_study_id)
-
-        if client_token:
-            print(f"Client session created with token: {client_token}")
-        else:
-            print(f"Failed to create client session.")
-
-        # Return the cleaned case study, extracted names, and the client session token to the frontend
         return jsonify({
-        "status": "success",
-        "text": cleaned_case_study,
-        "names": extracted_names,
-        "provider_session_id": provider_session_id,  # (UUID, not used for linking)
-        "case_study_id": case_study_id,              # (INT, for DB operations)
-        "client_token": client_token
-    })
+            "status": "success",
+            "text": cleaned,
+            "names": names,
+            "provider_session_id": provider_session_id,
+            "case_study_id": case_study_id
+        })
+
+
 
 
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route("/save_provider_summary", methods=["POST"])
+def save_provider_summary():
+    session = SessionLocal()
+    try:
+        data = request.get_json()
+        provider_session_id = data.get("provider_session_id")
+        updated_summary = data.get("summary")
+
+        if not provider_session_id or not updated_summary:
+            return jsonify({"status": "error", "message": "Missing data"}), 400
+
+        # Get interview from DB
+        interview = session.query(SolutionProviderInterview).filter_by(session_id=provider_session_id).first()
+        if not interview:
+            return jsonify({"status": "error", "message": "Session not found"}), 404
+
+        # ✅ Update summary
+        interview.summary = updated_summary
+
+        # ✅ Extract names from the new summary
+        names = extract_names_from_case_study(updated_summary)
+        lead_entity = names["lead_entity"]
+        partner_entity = names["partner_entity"]
+        project_title = names["project_title"]
+        new_title = f"{lead_entity} x {partner_entity}: {project_title}"
+
+        # ✅ Update CaseStudy title too
+        case_study = session.query(CaseStudy).filter_by(id=interview.case_study_id).first()
+        if case_study:
+            case_study.title = new_title
+
+        session.commit()
+
+        return jsonify({
+            "status": "success",
+            "message": "Summary and title updated",
+            "names": names,
+            "case_study_id": case_study.id,
+            "provider_session_id": provider_session_id
+        })
+
+    except Exception as e:
+        session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        session.close()
+
 
 @app.route("/save_client_transcript", methods=["POST"])
 def save_client_transcript():
@@ -335,6 +373,19 @@ def save_client_transcript():
     finally:
         session.close()
 
+
+@app.route("/extract_names", methods=["POST"])
+def extract_names():
+    try:
+        data = request.get_json()
+        summary = data.get("summary", "")
+        if not summary:
+            return jsonify({"status": "error", "message": "Missing summary"}), 400
+
+        names = extract_names_from_case_study(summary)
+        return jsonify({"status": "success", "names": names})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route("/generate_client_summary", methods=["POST"])
 def generate_client_summary():
@@ -415,7 +466,12 @@ Transcript:
             client_interview.summary = cleaned
             session.commit()
 
-        return jsonify({"status": "success", "text": cleaned})
+        return jsonify({
+            "status": "success",
+            "text": cleaned,
+            "case_study_id": invite.case_study_id  # ✅ added
+        })
+
 
     except Exception as e:
         session.rollback()
@@ -437,30 +493,6 @@ def store_client_summary(case_study_id, client_summary):
         session.close()
 
 
-@app.route("/finalize_pdf", methods=["POST"])
-def finalize_pdf():
-    try:
-        data = request.get_json()
-        final_text = clean_text(data.get("text", ""))
-
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        pdf_path = f"generated_pdfs/final_case_study_{timestamp}.pdf"
-        os.makedirs("generated_pdfs", exist_ok=True)
-
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_auto_page_break(auto=True, margin=15)
-        pdf.set_font("Arial", size=12)
-
-        for line in final_text.split("\n"):
-            pdf.multi_cell(0, 10, line)
-
-        pdf.output(pdf_path)
-
-        return jsonify({"status": "success", "pdf_url": f"/download/{os.path.basename(pdf_path)}"})
-
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route("/download/<filename>")
 def download_pdf(filename):
@@ -535,9 +567,6 @@ def create_client_session(case_study_id):
     finally:
         session.close()
 
-    
-
-
 
 @app.route("/client-interview/<token>", methods=["GET"])
 def client_interview(token):
@@ -603,7 +632,7 @@ def generate_client_interview_link():
         token = create_client_session(case_study_id)
         if not token:
             return jsonify({"status": "error", "message": "Failed to create client session."}), 500
-
+        
         interview_link = f"http://127.0.0.1:10000/client/{token}"
         return jsonify({"status": "success", "interview_link": interview_link})
     except Exception as e:
@@ -635,39 +664,104 @@ def generate_full_case_study():
         provider_summary = provider_interview.summary or ""
         client_summary = client_interview.summary or ""
         full_prompt = f"""
-You are a professional business writer. You are given two text summaries:
+        You are a top-tier business case study writer, creating professional, detailed, and visually attractive case studies for web or PDF (inspired by Storydoc, Adobe, and top SaaS companies).  
+        Your job is to read the full Solution Provider and Client summaries below, and **merge them into a single, rich, multi-perspective case study**—not just by pasting, but by synthesizing their insights, stories, and data into one engaging narrative.
 
-1. A detailed, structured case study from the solution provider.
-2. A short, human-style reflection from the client.
+        ---
 
-Your job is to merge these into one **powerful, narrative-driven case study** that includes both perspectives and follows a clear structure.
+        **Instructions:**
 
----
+        - Write in clear, engaging business English. Use a mix of paragraphs, bold section headers, and bullet points.
+        - Use ALL available details and insights from both the solution provider and client summaries: background, challenges, solutions, process, collaboration, data, quotes, and results.
+        - Do not repeat information—merge and synthesize related points to build a seamless story.
+        - Include real numbers, testimonials, collaboration stories, and unique project details whenever possible.
+        - Start with a punchy title and bold hero statement summarizing the main impact.
+        - Make each section distinct and visually scannable (use bold, bullet points, metrics, and quotes).
+        - Quote both the provider and client if possible.
+        - Make the results section full of specifics: show metrics, improvements, and qualitative outcomes.
+        - End with a call to action for future collaboration, demo, or contact.
 
-🎯 GOAL:  
-Create a complete case study with both technical and emotional depth — reflecting the provider's delivery and the client's outcome.
+        ---
 
----
+        **CASE STUDY STRUCTURE:**
 
-📌 **Format:**
-- Title (as-is from provider summary)
-- Hero Paragraph (use both sides)
-- The Challenge
-- The Solution
-- Implementation & Collaboration
-- Results & Impact
-- Client Reflection (from client summary)
-- Quote (from client summary if available)
-- Closing Thoughts
+        1. **Logo & Title Block**
+        - [Logo or company name]
+        - Title: [Provider] & [Client]: [Project or Transformation]
+        - Date (Month, Year)
+        - Avg. Reading Time (if provided)
 
----
+        2. **Hero Statement / Banner**
+        - One-sentence summary of the most important impact or achievement.
 
-Provider Summary:
-{provider_summary}
+        3. **Introduction**
+        - 2–3 sentence overview, combining both perspectives. Who are the companies? What problem did they tackle together? What was the outcome?
 
-Client Summary:
-{client_summary}
-"""
+        4. **Methodology** (optional)
+        - Brief on how the project was researched, developed, or analyzed (interviews, surveys, analytics, etc).
+
+        5. **Background**
+        - The client’s story, their industry, goals, and challenges before the project.
+        - Why did they choose the solution provider? Add context from both summaries.
+
+        6. **Challenges**
+        - List the main problems the client faced (use bullet points).
+        - Include quantitative data and qualitative pain points from both perspectives.
+
+        7. **The Solution (Provider’s Perspective)**
+        - Detail what was delivered, how it worked, and what made it unique.
+        - Include technical innovations, special features, and design choices.
+        - Reference the provider’s process, methods, and expertise.
+
+        8. **Implementation & Collaboration (Process)**
+        - Describe how both teams worked together: communication style, project management, user testing, sprints, workshops, etc.
+        - Highlight teamwork, feedback, and any challenges overcome together.
+        - Use insights and anecdotes from both provider and client summaries.
+
+        9. **Results & Impact**
+        - Specific metrics (growth, satisfaction, time saved, revenue, etc) and qualitative outcomes.
+        - Make this section detailed: include before/after numbers, quotes, and proof points.
+        - Summarize what changed for the client, and what the provider is proud of.
+
+        10. **Customer/Client Reflection**
+            - One paragraph (from the client summary) about their experience, feelings, and results in their own words.
+            - Include a client quote if provided.
+
+        11. **Testimonial/Provider Reflection**
+            - Provider’s own short reflection or quote about the partnership and success.
+
+        12. **Call to Action**
+            - Friendly invitation to book a meeting, see a demo, or contact for partnership.
+            - Include links or contact info if available.
+
+        ---
+
+        **Style Notes:**
+
+        - Make it detailed—avoid generic statements.
+        - Merge, paraphrase, and connect ideas to create a seamless, compelling story from both sides.
+        - Use real data and anecdotes whenever possible.
+        - Bold section headers, bullet points for lists, and visual cues for metrics.
+        - Ensure the story flows logically and keeps the reader engaged.
+        - The output should be ready for use as a visually attractive PDF or web story.
+
+        ---
+
+        **INPUT DATA:**
+
+
+        Now, generate the complete, detailed case study as described above, using both summaries  in every section.
+
+        **INPUT DATA:**
+        **Provider Summary:**  
+        {provider_summary}
+
+        ---
+
+        **Client Summary:**  
+        {client_summary}
+        """
+
 
         headers = {
             "Authorization": f"Bearer {OPENAI_API_KEY}",
@@ -685,16 +779,69 @@ Client Summary:
 
         response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
         result = response.json()
-        case_study = result["choices"][0]["message"]["content"]
-        cleaned = clean_text(case_study)
+        case_study_text = result["choices"][0]["message"]["content"]
+        cleaned = clean_text(case_study_text)
 
-        return jsonify({"status": "success", "text": cleaned})
+        # ✅ STORE the final summary in the DB
+        # ✅ STORE the final summary AND generate PDF
+        case_study.final_summary = cleaned
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        pdf_filename = f"final_case_study_{timestamp}.pdf"
+        pdf_path = os.path.join("generated_pdfs", pdf_filename)
+        os.makedirs("generated_pdfs", exist_ok=True)
+
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_auto_page_break(auto=True, margin=15)
+        pdf.set_font("Arial", size=12)
+        for line in cleaned.split("\n"):
+            pdf.multi_cell(0, 10, line)
+
+        pdf.output(pdf_path)
+
+        # ✅ Save path to DB
+        case_study.final_summary_pdf_path = pdf_path
+        session.commit()
+
+        return jsonify({
+            "status": "success",
+            "text": cleaned,
+            "pdf_url": f"/download/{pdf_filename}"
+        })
+
 
     except Exception as e:
         session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
     finally:
         session.close()
+
+@app.route("/download_full_summary_pdf")
+def download_full_summary_pdf():
+    case_study_id = request.args.get("case_study_id")
+    if not case_study_id:
+        return jsonify({"status": "error", "message": "Missing case_study_id"}), 400
+
+    session = SessionLocal()
+    try:
+        case_study = session.query(CaseStudy).filter_by(id=case_study_id).first()
+
+        # ✅ Check path existence
+        if not case_study or not case_study.final_summary_pdf_path or not os.path.exists(case_study.final_summary_pdf_path):
+            return jsonify({"status": "error", "message": "Final summary PDF not available"}), 404
+
+        return jsonify({
+            "status": "success",
+            "pdf_url": f"/download/{os.path.basename(case_study.final_summary_pdf_path)}"
+        })
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        session.close()
+
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))

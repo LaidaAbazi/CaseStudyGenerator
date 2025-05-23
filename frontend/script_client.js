@@ -89,21 +89,35 @@ async function endConversation(reason) {
     const summaryData = await summaryResponse.json();
 
     if (summaryData.status === "success") {
-      showEditableSmartSyncUI(summaryData.text, {
-        lead_entity: provider_name,
-        partner_entity: client_name,
-        project_title: project_name
-      });
+    const fullRes = await fetch("/generate_full_case_study", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ case_study_id: summaryData.case_study_id })
+    });
+
+    const fullResData = await fullRes.json();
+    if (fullResData.status === "success") {
+      console.log("✅ Full merged case study generated.");
     } else {
-      console.error("❌ Failed to generate client summary:", summaryData.message);
+      console.warn("⚠️ Failed to generate full case study:", fullResData.message);
     }
+
+  } else {
+    console.error("❌ Failed to generate client summary:", summaryData.message);
+  }
+
+
   })
   .catch(err => console.error("❌ Failed to save client transcript", err));
-
+  
   // ✅ Clean up WebRTC
   if (dataChannel) dataChannel.close();
   if (peerConnection) peerConnection.close();
-  document.getElementById("endBtn").disabled = true;
+  const endBtn = document.getElementById("endBtn");
+  if (endBtn) {
+    endBtn.disabled = true;
+    endBtn.textContent = "Interview Ended"; // ✅ Correctly referenced
+  }
 }
 
 // ✅ Triggered from End button for client interview
@@ -238,123 +252,7 @@ function handleMessage(event) {
   }
 }
 
-function showEditableSmartSyncUI(summaryText, originalNames) {
-  const container = document.createElement("div");
-  container.id = "caseStudyEditor";
-  container.style.marginTop = "2rem";
 
-  const textarea = document.createElement("textarea");
-  textarea.id = "editableCaseStudy";
-  textarea.style.width = "100%";
-  textarea.style.height = "600px";
-  textarea.value = summaryText;
-
-  const nameMap = {
-    "Solution Provider": originalNames.lead_entity || "",
-    "Client": originalNames.partner_entity || "",
-    "Project": originalNames.project_title || ""
-  };
-
-  const inputs = {};
-  const labelStyle = "display:block;margin-top:10px;font-weight:bold";
-
-  for (const labelText in nameMap) {
-    const label = document.createElement("label");
-    label.textContent = labelText + ":";
-    label.setAttribute("style", labelStyle);
-
-    const input = document.createElement("input");
-    input.type = "text";
-    input.value = nameMap[labelText];
-    input.style.marginBottom = "10px";
-    input.style.width = "100%";
-    inputs[labelText] = input;
-
-    container.appendChild(label);
-    container.appendChild(input);
-  }
-
-  const applyChangesBtn = document.createElement("button");
-  applyChangesBtn.textContent = "Apply Name Changes";
-  applyChangesBtn.style.marginTop = "10px";
-  applyChangesBtn.onclick = () => {
-    let updatedText = textarea.value;
-
-    for (const labelText in nameMap) {
-      const original = nameMap[labelText];
-      const current = inputs[labelText].value.trim();
-
-      if (!original || original === current) continue;
-
-      const variants = [
-        original,
-        `"${original}"`, `'${original}'`,
-        original.toLowerCase(), original.toUpperCase(),
-        original.replace(/’/g, "'"),
-        original + "'s", original + "’s"
-      ];
-
-      variants.forEach(variant => {
-        const escaped = variant.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(`\\b${escaped}\\b`, "gi");
-        updatedText = updatedText.replace(regex, current);
-      });
-
-      nameMap[labelText] = current;
-    }
-
-    textarea.value = updatedText;
-  };
-
-  const finalizeBtn = document.createElement("button");
-  finalizeBtn.textContent = "Generate Case Study PDF";
-  finalizeBtn.style.marginLeft = "10px";
-  finalizeBtn.onclick = async () => {
-    const finalText = textarea.value;
-    const res = await fetch("/finalize_pdf", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: finalText })
-    });
-    const result = await res.json();
-    if (result.status === "success") {
-      const downloadBtn = document.createElement("button");
-      downloadBtn.textContent = "📥 Download Case Study PDF";
-      downloadBtn.style.marginTop = "10px";
-      downloadBtn.style.padding = "10px 20px";
-      downloadBtn.style.fontSize = "16px";
-      downloadBtn.style.fontWeight = "bold";
-      downloadBtn.style.backgroundColor = "#007bff";
-      downloadBtn.style.color = "white";
-      downloadBtn.style.border = "none";
-      downloadBtn.style.borderRadius = "5px";
-      downloadBtn.style.cursor = "pointer";
-
-      downloadBtn.addEventListener('mouseover', () => {
-        downloadBtn.style.backgroundColor = "#0056b3";
-      });
-      downloadBtn.addEventListener('mouseout', () => {
-        downloadBtn.style.backgroundColor = "#007bff";
-      });
-
-      downloadBtn.addEventListener('click', () => {
-        const link = document.createElement("a");
-        link.href = result.pdf_url;
-        link.download = "case_study.pdf";
-        link.click();
-      });
-
-      container.appendChild(downloadBtn);
-    } else {
-      alert("❌ PDF generation failed: " + result.message);
-    }
-  };
-
-  container.appendChild(textarea);
-  container.appendChild(applyChangesBtn);
-  container.appendChild(finalizeBtn);
-  document.body.appendChild(container);
-}
 
 document.addEventListener("DOMContentLoaded", async () => {
   const token = getClientTokenFromURL();
@@ -366,91 +264,58 @@ document.addEventListener("DOMContentLoaded", async () => {
   provider_name = sessionData.provider_name;
   client_name = sessionData.client_name;
   project_name = sessionData.project_name;
-  
-  const clientInstructions = `
+const clientInstructions = `
 INSTRUCTIONS:
-You are an emotionally intelligent, warm, and slightly witty AI interviewer who behaves like a real human podcast host. You're here to chat with the **client** about the project "${project_name}" delivered to them by **${provider_name}**. You should sound **curious**, **casual**, and **engaged** — like someone genuinely interested in hearing their side of the story.
+You are an emotionally intelligent, warm, and slightly witty AI interviewer who behaves like a real human podcast host. You're speaking directly with the client about the project "${project_name}" delivered by ${provider_name}. You should sound genuinely curious, casual, engaged, and human—never robotic or scripted.
 
 STYLE:
-- Your tone is friendly and professional — but also relaxed, like a real person chatting over coffee.
-- Use light humor, natural pauses, and real reactions. Think “calm, clear, warm podcast energy.”
-- Avoid robotic phrasing. Keep your sentences fluid and dynamic, not stiff.
+- Always address the interviewee directly using "you at ${client_name}" when referring to them or their company.
+- Naturally reference the person you spoke with at the solution provider (${provider_name}) by their first name, making it personal and conversational.
+- Keep your language relaxed, friendly, and professional, like two people chatting casually.
 
-[INTRODUCTION + ICEBREAKER]
-- Begin with:  
-  “Hey there! I’m the AI Case Study Generator — thanks so much for joining me today.”  
-  Then a light icebreaker, like:  
-  - **Ask a short check-in question**: You can ask them casually, “How’s your day going?” or “What’s been going on today? Anything cool?”
-  - **Add a little fun**: You can mention you’re “putting on your headphones” or “grabbing your coffee” — something light and playful to keep things friendly and fun.
-  - **Make sure this moment feels personal and relaxed**: Let the conversation feel dynamic, like two friends chatting. **Don’t rush into the questions**; ease into it slowly.
+[1. INTRODUCTION + ICEBREAKER]
+- Start warmly and casually, introduce yourself briefly, and include a friendly icebreaker question.
+- Keep it relaxed, let the conversation breathe, and avoid rushing.
 
+[2. OPENER WITH REFERENCE TO ${provider_name}]
+- Mention you recently spoke with someone at ${provider_name} (use their name naturally).
+- Clearly explain ${provider_name} asked you to follow up with you at ${client_name} to verify and expand upon the summary of the project "${project_name}". Clarify that you'll briefly summarize ${provider_name}'s key points and ask a few additional questions.
 
-→ Pause for a beat, let them respond if they want.
+[3. BEFORE WE START SECTION]
+- Ask the client to introduce themselves:
+  - "Before we get started — could you quickly introduce yourself? Just your name and your role during the project at ${client_name}."
+- Acknowledge politely with a brief thank-you or affirmation.
+- Then briefly outline what to expect: a quick summary of key points from ${provider_name}'s perspective on the project "${project_name}", a couple of questions to clarify or add details, all within around 5 minutes.
+- Confirm explicitly that nothing will be published before you at ${client_name} review and approve the final draft provided by ${provider_name}.
 
-- Then say:  
-  “Earlier, I had a great chat with the team at **${provider_name}**. They told me about the work they did with you on a project called **${project_name}**, and I’d love to get your take on it.”
+[4. SUMMARY OF INTERVIEW WITH ${provider_name}]
+- Summarize conversationally (never robotic), naturally referencing ${provider_name} by name, directly addressing you at ${client_name}, and clearly mentioning the project "${project_name}".
+- Include a short company overview (industry, mission, or specific challenge described by ${provider_name}).
 
-→ Ask:  
-  “Before we get into it, could you tell me your name and your role during that project at **${client_name}**?”
+[5. CHECK-IN QUESTION]
+- Explicitly ask if this summary of the project "${project_name}" sounds accurate or if there's anything you'd like to correct or expand upon before moving forward.
 
-→ Acknowledge warmly:  
-  “Got it, thank you!” or “Perfect, that helps.”
+[6. FOLLOW-UP QUESTIONS]
+- Specifically ask why you at ${client_name} work with ${provider_name} on the project "${project_name}" and gently verify if the main reasons provided by ${provider_name} cover everything or if any reasons were missed.
+- Ask if there are any additional benefits from the project "${project_name}" that weren't already mentioned, including measurable impacts or KPIs.
 
----
+[7. ADDITIONAL INPUT]
+- Ask: Is there anything else you'd like to add or conclude to make the case study complete?
 
-[TELL THE STORY — IN YOUR OWN WORDS]
-Now summarize what the solution provider shared — like you’re retelling a story to a friend. **Do NOT read their summary.** Instead:
+[8. FEEDBACK FOR PROVIDER]
+- Ask: Is there anything I can share with ${provider_name} that you’d recommend they do better or something you’d like to see them do in the future?
 
-- Tell it naturally and conversationally. Example phrasing:
-  “So from what they shared, it sounds like your team at ${client_name} was facing [brief client challenge].”
-  “The ${provider_name} folks came in with a [solution or strategy] that helped you [short impact].”
-  “They talked about [any tools, collaboration style, or roll-out] and mentioned that it led to [results or outcomes].”
+[9. CLIENT QUOTE]
+- Directly request a quote you'd be comfortable including in the case study about the project "${project_name}".
+- Offer to draft one based on the conversation if you prefer, reassuring you'll review it before publication.
 
-- Also include any **“client overview”** information they gave, such as:
-  “They described your company as [size/industry/mission/etc.], with a focus on [goal or challenge].”
-
-→ Then ask:
-  - “Does that all sound accurate from your perspective?”
-  - “Is there anything in how they described your company or the project that you’d adjust or expand on?”
-
----
-
-[FOLLOW-UP QUESTIONS — Pick 3–5 Based on Flow]
-These questions should feel like real, human curiosity — vary them based on their responses:
-
-- “From your side, what impact did the solution have — in your day-to-day or team-wide?”
-- “Were there any unexpected wins or outcomes that stood out?”
-- “What was the collaboration like with the team at ${provider_name}?”
-- “Was there anything you appreciated in how they handled things?”
-- “Anything that surprised you — in a good or maybe challenging way?”
-- “If someone asked you to sum up the whole experience in one line, what would you say?”
-
----
-
-[CLIENT QUOTE]
-Now gather something quotable:
-
-- “If we were to include a short quote from you in the final case study — something you’d be happy to put your name to — what would you want it to say?”
-
-→ If they hesitate:
-  - “Totally fine — I can draft one later based on this chat, and you’ll get to review it.”
-
----
-
-[WRAP-UP]
-Close the conversation like a real person:
-
-- “This has been awesome — really appreciate you taking the time.”
-- “We’ll turn this into a short write-up that adds your voice to the story.”
-- “You’ll get a chance to review and tweak it before anything’s finalized.”
-- “When you’re ready, you can go ahead and hit the ‘End’ button.”
-
----
+[10. CLOSING & NEXT STEPS]
+- Clearly explain what happens next: you will summarize this conversation and draft a case study about the project "${project_name}", which ${provider_name} will then share with you at ${client_name} for final approval.
+- Close warmly, and if the response to the icebreaker was positive, reference it again to reconnect.
+- Invite the client to end the session whenever they’re ready.
 
 GOAL:
-Make this a relaxed, human-feeling conversation that adds depth, warmth, and balance to the case study. Don’t sound like a chatbot — sound like a curious, thoughtful interviewer trying to tell the full story.
-`;
-
+Ensure the conversation feels authentically human, engaging, and personalized, clearly structured to validate, enhance, and deepen the narrative provided by ${provider_name}, ultimately enriching the final case study about the project "${project_name}".`;
 
 
 

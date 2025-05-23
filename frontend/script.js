@@ -7,6 +7,8 @@ let userBuffer = "";
 let aiBuffer = "";
 let hasEnded = false;
 let isInstructionsApplied = false;
+let providerSessionId = ""; // At the top
+
 
 const audioElement = document.getElementById("aiAudio");
 const startButton = document.getElementById("startBtn");
@@ -58,6 +60,8 @@ STYLE:
 🧠 You MUST ask for all five, and you MUST refer to them throughout the conversation and in the final summary.
 
 → **React** after each response with things like “Got it,” “Ah, cool,” or “Interesting.” Don't rush into the next question.
+
+⚠️ This clarification MUST happen right after the icebreaker — before any structured questions begin — to manage expectations early and create a smooth experience.
 
 - **Set Timing Expectations (MANDATORY)**  
 Say in a warm, human tone that the conversation will only take about 5 to 10 minutes and involve just a few questions. You must say this out loud — do not skip it. Use natural, varied phrasing each time.
@@ -183,7 +187,7 @@ Casually bring up how the client will be invited afterward. For example:
 
 3. **Explain What the Client Link Does**  
 Describe the purpose of that link:
-- “That link will let them hear a quick summary of our chat…”  
+- - “That link will let me speak to your client and start by giving them a quick summary of what we talked about today…”
 - “And I’ll ask them just a couple of lightweight follow-ups so they can add their side to the story.”  
 - “Nothing too long — just helps us get their voice in too.”  
 → *[Let it land. Pause again.]*
@@ -224,6 +228,7 @@ Finish with a friendly, polite sign-off:
 GOAL:
 Create a fully human-feeling interview that captures the user's story in a natural, emotional, and insightful way. Surprise the user with how real and thoughtful the experience felt.
 `
+
 // Farewell detection setup
 const farewellPhrases = [
   
@@ -253,51 +258,7 @@ async function endConversation(reason) {
   console.log("Conversation ended:", reason);
   statusEl.textContent = "Interview complete";
 
-  // Save transcript first
-  fetch("/save_transcript", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(transcriptLog)
-  })
-  .then(res => res.json())
-  .then(async (data) => {
-    console.log("✅ Transcript saved:", data.file);
-
-    // Now automatically generate the summary
-    const formattedTranscript = transcriptLog
-      .map(e => `${e.speaker.toUpperCase()}: ${e.text}`)
-      .join("\n");
-
-    const summaryResponse = await fetch("/generate_summary", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ transcript: formattedTranscript })
-    });
-
-    const summaryData = await summaryResponse.json();
-
-    // Check if the summary generation was successful
-    if (summaryData.status === "success") {
-      const { lead_entity, partner_entity, project_title } = summaryData.names;
-
-      // Ensure that all required fields are present
-      if (lead_entity && partner_entity && project_title) {
-        console.log("✅ All required fields found, generating client interview link...");
-
-        // Now generate the client interview link after summary is successful
-        await generateClientInterviewLink(summaryData.case_study_id, lead_entity, partner_entity, project_title);
-        showEditableSmartSyncUI(summaryData.text, summaryData.names);
-
-      } else {
-        console.error("❌ Missing required fields for client interview link.");
-      }
-    } else {
-      console.error("❌ Failed to generate summary:", summaryData.message);
-    }
-  })
-  .catch(err => console.error("❌ Failed to save transcript", err));
-
-  // End the peer connection and close the session
+  // 👇 IMMEDIATELY end peer session & update UI
   if (dataChannel) dataChannel.close();
   if (peerConnection) peerConnection.close();
   const endBtn = document.getElementById("endBtn");
@@ -305,9 +266,44 @@ async function endConversation(reason) {
     endBtn.disabled = true;
     endBtn.textContent = "Interview Ended";
   }
+
+  // 👇 Do the heavy lifting (summary + DB save) AFTER session ends
+  setTimeout(async () => {
+    const formattedTranscript = transcriptLog
+      .map(e => `${e.speaker.toUpperCase()}: ${e.text}`)
+      .join("\n");
+
+    try {
+      // 1. Generate summary first
+      const summaryResponse = await fetch(`/generate_summary?provider_session_id=${providerSessionId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transcript: formattedTranscript })
+      });
+
+      const summaryData = await summaryResponse.json();
+      providerSessionId = summaryData.provider_session_id;
+
+      // 2. Save transcript with session ID
+      const saveRes = await fetch(`/save_transcript?provider_session_id=${providerSessionId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(transcriptLog)
+      });
+
+      const saveData = await saveRes.json();
+      console.log("✅ Transcript saved:", saveData);
+
+      if (summaryData.status === "success") {
+        showEditableSmartSyncUI(summaryData.text, summaryData.names);
+      } else {
+        console.error("❌ Failed to generate summary:", summaryData.message);
+      } 
+    } catch (err) {
+      console.error("❌ Error during post-end logic:", err);
+    }
+  }, 100); // small delay to ensure UI updates first
 }
-
-
 
 
 async function initConnection() {
@@ -656,59 +652,79 @@ function showEditableSmartSyncUI(summaryText, originalNames) {
   
     textarea.value = updatedText;
   };
-  
+  const saveSummaryBtn = document.createElement("button");
+  saveSummaryBtn.textContent = "Save Summary";
+  saveSummaryBtn.style.marginTop = "10px";
+  saveSummaryBtn.onclick = async () => {
+    const summary = textarea.value;
 
-  const finalizeBtn = document.createElement("button");
-finalizeBtn.textContent = "Generate Case Study PDF";
-finalizeBtn.style.marginLeft = "10px";
-finalizeBtn.onclick = async () => {
-  const finalText = textarea.value;
-  const res = await fetch("/finalize_pdf", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text: finalText })
-  });
-  const result = await res.json();
-  if (result.status === "success") {
-    // Create a "Download Case Study PDF" button instead of a link
-    const downloadBtn = document.createElement("button");
-    downloadBtn.textContent = "📥 Download Case Study PDF";
-    downloadBtn.style.marginTop = "10px";
-    downloadBtn.style.padding = "10px 20px";
-    downloadBtn.style.fontSize = "16px";
-    downloadBtn.style.fontWeight = "bold";
-    downloadBtn.style.backgroundColor = "#007bff"; // Button color
-    downloadBtn.style.color = "white";
-    downloadBtn.style.border = "none";
-    downloadBtn.style.borderRadius = "5px";
-    downloadBtn.style.cursor = "pointer";
-
-    // Add hover effect
-    downloadBtn.addEventListener('mouseover', () => {
-      downloadBtn.style.backgroundColor = "#0056b3";
-    });
-    downloadBtn.addEventListener('mouseout', () => {
-      downloadBtn.style.backgroundColor = "#007bff";
+    const res = await fetch("/save_provider_summary", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        provider_session_id: providerSessionId,
+        summary: summary
+      })
     });
 
-    // Trigger file download on button click
-    downloadBtn.addEventListener('click', () => {
+    const result = await res.json();
+    if (result.status === "success") {
+      alert("✅ Summary saved to database.");
+
+      // ✅ Extract updated names from the saved summary
+      const extractRes = await fetch("/extract_names", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ summary: summary })
+      });
+
+      const extractData = await extractRes.json();
+      if (extractData.status === "success") {
+        const { lead_entity, partner_entity, project_title } = extractData.names;
+        await generateClientInterviewLink(result.case_study_id, lead_entity, partner_entity, project_title);
+        
+        // ✅ NEW: check if the final summary is ready and show download button
+        pollForFinalSummary(result.case_study_id);
+
+
+      } else {
+        console.error("❌ Name extraction failed:", extractData.message);
+      }
+    } else {
+      alert("❌ Failed to save summary: " + result.message);
+    }
+  };
+
+
+
+  container.appendChild(saveSummaryBtn);
+
+// 📥 Final Download Button placeholder inserted next to Save
+  const downloadBtn = document.createElement("button");
+  downloadBtn.id = "finalDownloadBtn";
+  downloadBtn.textContent = "Download Final Case Study PDF";
+  downloadBtn.style.marginLeft = "10px";
+  downloadBtn.style.padding = "10px 20px";
+  downloadBtn.style.backgroundColor = "#007bff";
+  downloadBtn.style.color = "#fff";
+  downloadBtn.style.border = "none";
+  downloadBtn.style.borderRadius = "5px";
+  downloadBtn.style.cursor = "pointer";
+  downloadBtn.style.display = "none";  // Hidden until available
+
+  downloadBtn.onclick = () => {
+    if (downloadBtn.dataset.url) {
       const link = document.createElement("a");
-      link.href = result.pdf_url;
-      link.download = "case_study.pdf";
-      link.click(); // Programmatically click the link to download
-    });
+      link.href = downloadBtn.dataset.url;
+      link.download = "final_case_study.pdf";
+      link.click();
+    }
+  };
 
-    // Append the button to the container
-    container.appendChild(downloadBtn);
-  } else {
-    alert("❌ PDF generation failed: " + result.message);
-  }
-};
+container.appendChild(downloadBtn);
 
   container.appendChild(textarea);
   container.appendChild(applyChangesBtn);
-  container.appendChild(finalizeBtn);
   document.body.appendChild(container);
 }
 
@@ -770,3 +786,48 @@ document.getElementById("copyLinkBtn").addEventListener("click", () => {
     button.innerHTML = '<i class="fa fa-copy"></i> Copy';
   }, 2000);
 });
+function pollForFinalSummary(caseStudyId, retries = 250, delay = 5000) {
+  let attempts = 0;
+
+  const poll = async () => {
+    try {
+      const response = await fetch(`/download_full_summary_pdf?case_study_id=${caseStudyId}`);
+      const data = await response.json();
+
+      if (data.status === "success") {
+        const downloadBtn = document.getElementById("finalDownloadBtn");
+        if (downloadBtn) {
+          downloadBtn.dataset.url = data.pdf_url;
+          downloadBtn.style.display = "inline-block";
+        }
+
+
+        // ✅ Optional: remove loading message
+        const waitMsg = document.getElementById("waitForClientMsg");
+        if (waitMsg) waitMsg.remove();
+
+      } else {
+        console.log("ℹ️ Final summary not ready yet.");
+        if (attempts < retries) {
+          attempts++;
+          setTimeout(poll, delay);
+        } else {
+          console.warn("❌ Stopped polling. Final summary was not ready in time.");
+        }
+      }
+    } catch (err) {
+      console.error("❌ Error checking final summary:", err);
+    }
+  };
+
+  // Optional: show message
+  const waitMsg = document.createElement("p");
+  waitMsg.textContent = "⏳ Waiting for the client to finish the interview...";
+  waitMsg.id = "waitForClientMsg";
+  waitMsg.style.marginTop = "10px";
+  document.body.appendChild(waitMsg);
+
+  poll();
+}
+
+
