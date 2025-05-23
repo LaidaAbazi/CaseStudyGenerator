@@ -633,7 +633,8 @@ def generate_client_interview_link():
         if not token:
             return jsonify({"status": "error", "message": "Failed to create client session."}), 500
         
-        interview_link = f"http://127.0.0.1:10000/client/{token}"
+        BASE_URL = os.getenv("BASE_URL", "http://127.0.0.1:10000")
+        interview_link = f"{BASE_URL}/client/{token}"
         return jsonify({"status": "success", "interview_link": interview_link})
     except Exception as e:
         session.rollback()
