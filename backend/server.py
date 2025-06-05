@@ -685,8 +685,8 @@ def generate_client_interview_link():
         token = create_client_session(case_study_id)
         if not token:
             return jsonify({"status": "error", "message": "Failed to create client session."}), 500
-        
-        interview_link = f"http://127.0.0.1:10000/client/{token}"
+        BASE_URL = os.getenv("BASE_URL", "http://127.0.0.1:10000")
+        interview_link = f"{BASE_URL}/client/{token}"
         provider_interview = session.query(SolutionProviderInterview).filter_by(case_study_id=case_study_id).first()
         if provider_interview:
             provider_interview.client_link_url = interview_link
