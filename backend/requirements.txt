@@ -6,3 +6,8 @@ psycopg2
 sqlalchemy
 flask_sqlalchemy
 Flask-Migrate
+Flask-Mail
+Flask-WTF
+flask-cors
+langdetect==1.0.9
+flask-jwt-extended

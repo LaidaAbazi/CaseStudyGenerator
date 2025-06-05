@@ -1,28 +1,51 @@
-from flask import Flask, jsonify, send_from_directory, request, send_file
+from flask import Flask, jsonify, send_from_directory, request, send_file, session
 import requests
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from fpdf import FPDF
 import re
 import uuid
 import json
+from langdetect import detect
 from db import SessionLocal, init_db
 from models import (
     User,
     CaseStudy,
     SolutionProviderInterview,
     ClientInterview,
-    InviteToken
+    InviteToken,
+    Label,
+    Feedback
 )
+from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.exc import IntegrityError
+from functools import wraps
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 
 load_dotenv()
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 
+# JWT configuration
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "dev_jwt_secret")  # Use a strong secret in production!
+app.config["JWT_TOKEN_LOCATION"] = ["headers"]  # Tell Flask-JWT-Extended to look for JWTs in headers
+
 init_db()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+# Security configurations
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=24),
+    MAX_LOGIN_ATTEMPTS=5,
+    LOGIN_LOCKOUT_DURATION=timedelta(minutes=15)
+)
+
+app.secret_key = os.getenv("SECRET_KEY", "dev_secret_key")  # Use a strong secret in production!
 
 openai_config = {
     "model": "gpt-4",
@@ -32,21 +55,18 @@ openai_config = {
     "frequency_penalty": 0.2   # Keeps phrasing varied
 }
 
-
-
-
-
-
+# Initialize feedback sessions dictionary
+feedback_sessions = {}
 
 def clean_text(text):
     return (
         text.replace("•", "-")  
             .replace("—", "-")
             .replace("–", "-")
-            .replace("“", '"')
-            .replace("”", '"')
-            .replace("‘", "'")
-            .replace("’", "'")
+            .replace(""", '"')
+            .replace(""", '"')
+            .replace("'", "'")
+            .replace("'", "'")
             .replace("£", "GBP ")
     )
 
@@ -84,7 +104,7 @@ def extract_names_from_case_study(text):
 
 @app.route("/")
 def serve_index():
-    return send_from_directory(app.static_folder, "index.html")
+    return send_from_directory(app.static_folder, "login.html")
 
 @app.route("/session")
 def create_session():
@@ -144,6 +164,35 @@ def save_transcript():
     finally:
         session.close()
 
+from langdetect import detect
+
+def detect_language(text):
+    try:
+        # Get the language code
+        lang_code = detect(text)
+        
+        # Map language codes to full names
+        language_map = {
+            'en': 'English',
+            'es': 'Spanish',
+            'fr': 'French',
+            'de': 'German',
+            'it': 'Italian',
+            'pt': 'Portuguese',
+            'ru': 'Russian',
+            'zh': 'Chinese',
+            'ja': 'Japanese',
+            'ko': 'Korean',
+            'ar': 'Arabic',
+            'hi': 'Hindi',
+            'pl': 'Polish',
+            'sq': 'Albanian',  # Added Albanian
+            # Add more languages as needed
+        }
+        
+        return language_map.get(lang_code, 'English')  # Default to English if language not in map
+    except:
+        return 'English'  # Default to English if detection fails
 
 @app.route("/generate_summary", methods=["POST"])
 def generate_summary():
@@ -154,11 +203,16 @@ def generate_summary():
         if not transcript:
             return jsonify({"status": "error", "message": "Transcript is missing."}), 400
 
-        # Same prompt as before, making sure the GPT model returns a case study summary
+        # Detect language from transcript
+        detected_language = detect_language(transcript)
+        print(detected_language)
+        
+        # Use the detected language in the prompt
         prompt = f"""
         You are a professional case study writer. Your job is to generate a **rich, structured, human-style business case study** from a transcript of a real voice interview.
 
-        This is an **external project**: the speaker is the solution provider describing a project they delivered to a client. Your task is to write a clear, emotionally intelligent case study from their perspective—based **ONLY** on what’s in the transcript.
+        IMPORTANT: Write the entire case study in {detected_language}. This includes all sections, quotes, and any additional content.
+        This is an **external project**: the speaker is the solution provider describing a project they delivered to a client. Your task is to write a clear, emotionally intelligent case study from their perspective—based **ONLY** on what's in the transcript.
 
         --- 
 
@@ -167,14 +221,13 @@ def generate_summary():
         - Do NOT simulate the interview format  
         - Do NOT assume or imagine info not explicitly said  
 
-        ✅ **USE ONLY what’s really in the transcript.** If a piece of information (like a client quote) wasn’t provided, **craft** a brief, realistic-sounding quote that captures the client’s sentiment based on what they did say.
+        ✅ **USE ONLY what's really in the transcript.** If a piece of information (like a client quote) wasn't provided, **craft** a brief, realistic-sounding quote that captures the client's sentiment based on what they did say.
 
         --- 
 
         ### ✍️ CASE STUDY STRUCTURE (MANDATORY)
 
-        **Title** (first line only—no extra formatting):  
-        Format: **[Solution Provider] x [Client]: [Project/product/service/strategy]**
+        **Title** (first line only—no extra formatting):Format: **[Solution Provider] x [Client]: [Project/product/service/strategy]**
 
         --- 
 
@@ -205,19 +258,19 @@ def generate_summary():
 
         **Section 4 – Results & Impact**  
         - What changed for the client?  
-        - Include any real metrics (e.g., “40% faster onboarding”)  
+        - Include any real metrics (e.g., "40% faster onboarding")  
         - Mention qualitative feedback if shared
 
         --- 
 
         **Section 5 – Client Quote**  
         - If the transcript contains a **direct, verbatim quote** from the client or solution provider, include it as spoken.  
-        - If no direct quote is present, compose **one elegant sentence** in quotation marks from the client’s or provider’s perspective. Use only language, tone, and key points found in the transcript to craft a testimonial that feels genuine, highlights the solution’s impact, and reads like a professional endorsement.
+        - If no direct quote is present, compose **one elegant sentence** in quotation marks from the client's or provider's perspective. Use only language, tone, and key points found in the transcript to craft a testimonial that feels genuine, highlights the solution's impact, and reads like a professional endorsement.
 
         --- 
 
         **Section 6 – Reflections & Closing**  
-        - What did this mean for the provider’s team?  
+        - What did this mean for the provider's team?  
         - End with a warm, forward-looking sentence.
 
         --- 
@@ -399,9 +452,14 @@ def generate_client_summary():
             return jsonify({"status": "error", "message": "Transcript is missing."}), 400
         if not token:
             return jsonify({"status": "error", "message": "Missing token"}), 400
+        detected_language = detect_language(transcript)
+        print(detected_language)
+        
 
         prompt = f"""
 You are a professional case study writer. Your job is to generate a **rich, human-style client perspective** on a project delivered by a solution provider.
+IMPORTANT: Write the entire case study in {detected_language}. This includes all sections, quotes, and any additional content.
+        - DO NOT include the transcript itself in the output.
 
 This is a **client voice** case study — the transcript you're given is from the client who received the solution. You will create a short, structured reflection based entirely on what they shared.
 
@@ -417,7 +475,7 @@ This is a **client voice** case study — the transcript you're given is from th
 **Section 1 – Project Reflection (Client Voice)**  
 A warm, professional 3–5 sentence paragraph that shares:  
 - What the project was  
-- What the client’s experience was like  
+- What the client's experience was like  
 - The results or value they got  
 - A light personal note if they gave one
 
@@ -499,22 +557,17 @@ def download_pdf(filename):
     return send_file(os.path.join("generated_pdfs", filename), as_attachment=True)
 
 def store_solution_provider_session(provider_session_id, cleaned_case_study):
-    session = SessionLocal()
+    session_db = SessionLocal()
     try:
         extracted_names = extract_names_from_case_study(cleaned_case_study)
-        # For demo, just get first user (for real app, use logged-in user)
-        user = session.query(User).first()
+        # Use the currently logged-in user
+        from flask import session as flask_session
+        user_id = flask_session.get('user_id')
+        if not user_id:
+            raise Exception('No user is logged in.')
+        user = session_db.query(User).filter_by(id=user_id).first()
         if not user:
-            # Demo: create a user if doesn't exist (production: require login!)
-            user = User(
-                first_name="Demo",
-                last_name="User",
-                email=f"demo_{uuid.uuid4()}@test.com",
-                password_hash="hashedpassword",
-                company_name=extracted_names['lead_entity']
-            )
-            session.add(user)
-            session.commit()
+            raise Exception('Logged-in user not found.')
 
         # Create the CaseStudy (links to user)
         case_study = CaseStudy(
@@ -522,8 +575,8 @@ def store_solution_provider_session(provider_session_id, cleaned_case_study):
             title=f"{extracted_names['lead_entity']} x {extracted_names['partner_entity']}: {extracted_names['project_title']}",
             final_summary=None  # We fill this later, after full doc is generated
         )
-        session.add(case_study)
-        session.commit()
+        session_db.add(case_study)
+        session_db.commit()
 
         # Create the SolutionProviderInterview
         provider_interview = SolutionProviderInterview(
@@ -532,18 +585,18 @@ def store_solution_provider_session(provider_session_id, cleaned_case_study):
             transcript="",  # You can store transcript here later if needed
             summary=cleaned_case_study
         )
-        session.add(provider_interview)
-        session.commit()
+        session_db.add(provider_interview)
+        session_db.commit()
         print(f"✅ Solution provider interview saved (ID: {provider_session_id})")
 
         return case_study.id  # Return case_study.id to be used for next step
 
     except Exception as e:
-        session.rollback()
+        session_db.rollback()
         print("❌ Error saving provider session:", str(e))
         raise
     finally:
-        session.close()
+        session_db.close()
 
 
 
@@ -634,6 +687,11 @@ def generate_client_interview_link():
             return jsonify({"status": "error", "message": "Failed to create client session."}), 500
         
         interview_link = f"http://127.0.0.1:10000/client/{token}"
+        provider_interview = session.query(SolutionProviderInterview).filter_by(case_study_id=case_study_id).first()
+        if provider_interview:
+            provider_interview.client_link_url = interview_link
+            session.commit()
+
         return jsonify({"status": "success", "interview_link": interview_link})
     except Exception as e:
         session.rollback()
@@ -657,29 +715,43 @@ def generate_full_case_study():
 
         provider_interview = case_study.solution_provider_interview
         client_interview = case_study.client_interview
+        
 
         if not provider_interview or not client_interview:
             return jsonify({"status": "error", "message": "Both summaries are required."}), 400
 
         provider_summary = provider_interview.summary or ""
         client_summary = client_interview.summary or ""
+        detected_language = detect_language(provider_summary)
+        print(detected_language)
         full_prompt = f"""
-        You are a top-tier business case study writer, creating professional, detailed, and visually attractive case studies for web or PDF (inspired by Storydoc, Adobe, and top SaaS companies).  
+        You are a top-tier business case study writer, creating professional, detailed, and visually attractive stories for web or PDF (inspired by Storydoc, Adobe, and top SaaS companies).
+
+        IMPORTANT: Write the entire case study in {detected_language}. This includes all sections, quotes, and any additional content.
+
         Your job is to read the full Solution Provider and Client summaries below, and **merge them into a single, rich, multi-perspective case study**—not just by pasting, but by synthesizing their insights, stories, and data into one engaging narrative.
 
         ---
 
         **Instructions:**
-
+        - The **Solution Provider version is your base**; the Client version should *enhance, correct, or add* to it.
+        - If the client provides a correction, update, or different number/fact for something from the provider, ALWAYS use the client's corrected version in the main story (unless it is unclear; then flag for review).
+        - In the "Corrected & Conflicted Replies" section, list each specific fact, number, or point that the client corrected, changed, or disagreed with.
+        - Accuracy is CRITICAL: Double-check every fact, number, quote, and piece of information. Do NOT make any mistakes or subtle errors in the summary. Every detail must match the input summaries exactly unless you are synthesizing clearly from both. If you are unsure about a detail, do NOT invent or guess; either omit or flag it for clarification.
+        - If the Client provided information that contradicts, corrects, or expands on the Provider's version, **create a special section titled "Corrected & Conflicted Replies"**. In this section, briefly and clearly list the key areas where the Client said something different, added, corrected, or removed a point. This should be a concise summary (bullets or short sentences) so the provider can easily see what changed.
+        - In the main story, **merge and synthesize all available details and insights** from both the Solution Provider and Client summaries: background, challenges, solutions, process, collaboration, data, quotes, and results. Do not repeat information—combine and paraphrase to build a seamless narrative.
+        - **Quotes:**  
+            - Whenever you are prompted to include a quote (from either side), do so.
+            - Additionally, act as an expert quote-finder: review both full interviews and *proactively* identify 2–3 additional, meaningful, and positive quotes from anywhere in the transcripts—especially those that reveal key insights, excitement, or real value—even if they were not explicitly provided as "quotes". This ensures the best soundbites aren't missed.
+            - Quote both the provider and client if possible, using their actual words when available.
         - Write in clear, engaging business English. Use a mix of paragraphs, bold section headers, and bullet points.
-        - Use ALL available details and insights from both the solution provider and client summaries: background, challenges, solutions, process, collaboration, data, quotes, and results.
-        - Do not repeat information—merge and synthesize related points to build a seamless story.
         - Include real numbers, testimonials, collaboration stories, and unique project details whenever possible.
         - Start with a punchy title and bold hero statement summarizing the main impact.
         - Make each section distinct and visually scannable (use bold, bullet points, metrics, and quotes).
-        - Quote both the provider and client if possible.
         - Make the results section full of specifics: show metrics, improvements, and qualitative outcomes.
         - End with a call to action for future collaboration, demo, or contact.
+        - DO NOT use asterisks or Markdown stars (**) in your output. Section headers should be in ALL CAPS or plain text only.
+
 
         ---
 
@@ -701,17 +773,17 @@ def generate_full_case_study():
         - Brief on how the project was researched, developed, or analyzed (interviews, surveys, analytics, etc).
 
         5. **Background**
-        - The client’s story, their industry, goals, and challenges before the project.
+        - The client's story, their industry, goals, and challenges before the project.
         - Why did they choose the solution provider? Add context from both summaries.
 
         6. **Challenges**
         - List the main problems the client faced (use bullet points).
         - Include quantitative data and qualitative pain points from both perspectives.
 
-        7. **The Solution (Provider’s Perspective)**
+        7. **The Solution (Provider's Perspective)**
         - Detail what was delivered, how it worked, and what made it unique.
         - Include technical innovations, special features, and design choices.
-        - Reference the provider’s process, methods, and expertise.
+        - Reference the provider's process, methods, and expertise.
 
         8. **Implementation & Collaboration (Process)**
         - Describe how both teams worked together: communication style, project management, user testing, sprints, workshops, etc.
@@ -728,9 +800,27 @@ def generate_full_case_study():
             - Include a client quote if provided.
 
         11. **Testimonial/Provider Reflection**
-            - Provider’s own short reflection or quote about the partnership and success.
+            - Provider's own short reflection or quote about the partnership and success.
 
-        12. **Call to Action**
+        12. **Corrected & Conflicted Replies**
+            - *(Only for the solution provider's view, not in the published story for the client.)*
+            - Briefly summarize any specific facts, numbers, or perspectives that the client corrected, contradicted, or added, compared to the provider's summary.
+            - Use a bulleted list or short sentences:  
+            - "Client stated project delivered in 7 weeks, not 6."  
+            - "Client mentioned additional integration with Shopify, not noted by provider."  
+            - "Provider said client satisfaction 95%, client said 89%."  
+            - "Client removed/clarified certain benefits."
+            - This is a quick-reference "diff" so the provider can see at a glance where their and the client's stories differ or align.
+
+        13. **Quotes Highlights**
+            - At the end, provide a section listing 2–3 of the most impactful, positive, and contextually relevant quotes found anywhere in either interview transcript (even if not submitted as a "quote").  
+            - Label the quotes with who said them.  
+            - Example:  
+            - **Provider:** "What surprised us most was the speed of adoption."  
+            - **Client:** "I finally got real-time data I could actually use."  
+            - Only include direct words or close paraphrases.
+
+        14. **Call to Action**
             - Friendly invitation to book a meeting, see a demo, or contact for partnership.
             - Include links or contact info if available.
 
@@ -749,10 +839,8 @@ def generate_full_case_study():
 
         **INPUT DATA:**
 
+        Now, generate the complete, detailed case study as described above, using both summaries in every section, following these instructions exactly.
 
-        Now, generate the complete, detailed case study as described above, using both summaries  in every section.
-
-        **INPUT DATA:**
         **Provider Summary:**  
         {provider_summary}
 
@@ -761,6 +849,7 @@ def generate_full_case_study():
         **Client Summary:**  
         {client_summary}
         """
+
 
 
         headers = {
@@ -841,7 +930,361 @@ def download_full_summary_pdf():
     finally:
         session.close()
 
+def validate_password(password):
+    """Validate password strength."""
+    if len(password) < 8:
+        return False, "Password must be at least 8 characters long"
+    if not re.search(r"[A-Z]", password):
+        return False, "Password must contain at least one uppercase letter"
+    if not re.search(r"[a-z]", password):
+        return False, "Password must contain at least one lowercase letter"
+    if not re.search(r"\d", password):
+        return False, "Password must contain at least one number"
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        return False, "Password must contain at least one special character"
+    return True, ""
 
+def validate_email(email):
+    """Validate email format."""
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return bool(re.match(pattern, email))
+
+def sanitize_input(text):
+    """Sanitize user input."""
+    if not text:
+        return ""
+    # Remove any HTML tags
+    text = re.sub(r'<[^>]+>', '', text)
+    # Remove any script tags
+    text = re.sub(r'<script.*?>.*?</script>', '', text, flags=re.DOTALL)
+    return text.strip()
+
+@app.route('/api/signup', methods=['POST'])
+def api_signup():
+    data = request.get_json()
+    print("DEBUG SIGNUP DATA:", data)
+    required = ['first_name', 'last_name', 'email', 'company', 'password']
+    if not all(data.get(f) for f in required):
+        print("DEBUG: Missing field in", data)
+        for f in required:
+            print(f"  {f}: {data.get(f) if data else None}")
+        return jsonify({'success': False, 'message': 'All fields are required.'}), 400
+    session_db = SessionLocal()
+    try:
+        user = User(
+            first_name=data['first_name'].strip(),
+            last_name=data['last_name'].strip(),
+            email=data['email'].strip().lower(),
+            company_name=data['company'].strip(),
+            password_hash=generate_password_hash(data['password'])
+        )
+        session_db.add(user)
+        session_db.commit()
+        session['user_id'] = user.id
+        session.permanent = True
+        return jsonify({'success': True})
+    except IntegrityError:
+        session_db.rollback()
+        return jsonify({'success': False, 'message': 'Email already registered.'}), 409
+    except Exception as e:
+        session_db.rollback()
+        print("DEBUG: Exception during signup:", e)
+        return jsonify({'success': False, 'message': 'An error occurred during signup.'}), 500
+    finally:
+        session_db.close()
+
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    data = request.get_json()
+    email = data.get('email', '').strip().lower()
+    password = data.get('password', '')
+
+    if not email or not password:
+        return jsonify({'success': False, 'message': 'Email and password are required.'}), 400
+
+    session_db = SessionLocal()
+    try:
+        user = session_db.query(User).filter_by(email=email).first()
+        
+        # Check if account is locked
+        if user and user.account_locked_until and user.account_locked_until > datetime.now():
+            remaining_time = (user.account_locked_until - datetime.now()).seconds // 60
+            return jsonify({
+                'success': False, 
+                'message': f'Account is locked. Try again in {remaining_time} minutes.'
+            }), 401
+
+        if user and check_password_hash(user.password_hash, password):
+            # Reset failed attempts on successful login
+            user.failed_login_attempts = 0
+            user.last_login = datetime.now()
+            user.account_locked_until = None
+            session_db.commit()
+            
+            session['user_id'] = user.id
+            session.permanent = True
+            return jsonify({'success': True})
+        else:
+            if user:
+                # Increment failed attempts
+                user.failed_login_attempts += 1
+                if user.failed_login_attempts >= app.config['MAX_LOGIN_ATTEMPTS']:
+                    user.account_locked_until = datetime.now() + app.config['LOGIN_LOCKOUT_DURATION']
+                session_db.commit()
+            
+            return jsonify({'success': False, 'message': 'Invalid email or password.'}), 401
+    finally:
+        session_db.close()
+
+@app.route('/api/logout', methods=['POST'])
+def api_logout():
+    session.clear()
+    return jsonify({'success': True})
+
+@app.route('/api/case_studies')
+def api_case_studies():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    label_id = request.args.get('label', type=int)
+    db_session = SessionLocal()
+    try:
+        query = db_session.query(CaseStudy).filter_by(user_id=user_id)
+        if label_id:
+            query = query.join(CaseStudy.labels).filter(Label.id == label_id)
+        case_studies = query.all()
+        result = []
+        for cs in case_studies:
+            result.append({
+                'id': cs.id,
+                'title': cs.title,
+                'solution_provider_summary': getattr(cs.solution_provider_interview, 'summary', None),
+                'client_summary': getattr(cs.client_interview, 'summary', None),
+                'final_summary': cs.final_summary,
+                'labels': [{'id': l.id, 'name': l.name} for l in cs.labels],
+                'client_link_url': getattr(cs.solution_provider_interview, 'client_link_url', None),  
+            })
+        return jsonify({'success': True, 'case_studies': result})
+    finally:
+        db_session.close()
+
+@app.route('/api/labels', methods=['GET'])
+def get_labels():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    db_session = SessionLocal()
+    try:
+        labels = db_session.query(Label).filter_by(user_id=user_id).all()
+        return jsonify({'success': True, 'labels': [{'id': l.id, 'name': l.name} for l in labels]})
+    finally:
+        db_session.close()
+
+@app.route('/api/labels', methods=['POST'])
+def create_label():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    data = request.get_json()
+    name = data.get('name', '').strip()
+    if not name:
+        return jsonify({'success': False, 'message': 'Label name required'}), 400
+    db_session = SessionLocal()
+    try:
+        label = Label(name=name, user_id=user_id)
+        db_session.add(label)
+        db_session.commit()
+        return jsonify({'success': True, 'label': {'id': label.id, 'name': label.name}})
+    finally:
+        db_session.close()
+
+@app.route('/api/labels/<int:label_id>', methods=['PATCH'])
+def rename_label(label_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    data = request.get_json()
+    new_name = data.get('name', '').strip()
+    if not new_name:
+        return jsonify({'success': False, 'message': 'New label name required'}), 400
+    db_session = SessionLocal()
+    try:
+        label = db_session.query(Label).filter_by(id=label_id, user_id=user_id).first()
+        if not label:
+            return jsonify({'success': False, 'message': 'Label not found'}), 404
+        label.name = new_name
+        db_session.commit()
+        return jsonify({'success': True, 'label': {'id': label.id, 'name': label.name}})
+    finally:
+        db_session.close()
+
+@app.route('/api/labels/<int:label_id>', methods=['DELETE'])
+def delete_label(label_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    db_session = SessionLocal()
+    try:
+        label = db_session.query(Label).filter_by(id=label_id, user_id=user_id).first()
+        if not label:
+            return jsonify({'success': False, 'message': 'Label not found'}), 404
+        db_session.delete(label)
+        db_session.commit()
+        return jsonify({'success': True})
+    finally:
+        db_session.close()
+
+@app.route('/api/case_studies/<int:case_study_id>/labels', methods=['POST'])
+def add_labels_to_case_study(case_study_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    data = request.get_json()
+    label_ids = data.get('label_ids', [])
+    label_names = data.get('label_names', [])
+    db_session = SessionLocal()
+    try:
+        case_study = db_session.query(CaseStudy).filter_by(id=case_study_id, user_id=user_id).first()
+        if not case_study:
+            return jsonify({'success': False, 'message': 'Case study not found'}), 404
+        # Add by IDs
+        for lid in label_ids:
+            label = db_session.query(Label).filter_by(id=lid, user_id=user_id).first()
+            if label and label not in case_study.labels:
+                case_study.labels.append(label)
+        # Add by names (create if not exist)
+        for name in label_names:
+            name = name.strip()
+            if not name:
+                continue
+            label = db_session.query(Label).filter_by(name=name, user_id=user_id).first()
+            if not label:
+                label = Label(name=name, user_id=user_id)
+                db_session.add(label)
+                db_session.commit()
+            if label not in case_study.labels:
+                case_study.labels.append(label)
+        db_session.commit()
+        return jsonify({'success': True, 'labels': [{'id': l.id, 'name': l.name} for l in case_study.labels]})
+    finally:
+        db_session.close()
+
+@app.route('/api/case_studies/<int:case_study_id>/labels/<int:label_id>', methods=['DELETE'])
+def remove_label_from_case_study(case_study_id, label_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    db_session = SessionLocal()
+    try:
+        case_study = db_session.query(CaseStudy).filter_by(id=case_study_id, user_id=user_id).first()
+        if not case_study:
+            return jsonify({'success': False, 'message': 'Case study not found'}), 404
+        label = db_session.query(Label).filter_by(id=label_id, user_id=user_id).first()
+        if not label or label not in case_study.labels:
+            return jsonify({'success': False, 'message': 'Label not found on this case study'}), 404
+        case_study.labels.remove(label)
+        db_session.commit()
+        return jsonify({'success': True, 'labels': [{'id': l.id, 'name': l.name} for l in case_study.labels]})
+    finally:
+        db_session.close()
+
+@app.route('/api/user')
+def api_user():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    db_session = SessionLocal()
+    try:
+        user = db_session.query(User).filter_by(id=user_id).first()
+        if not user:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+        return jsonify({
+            'success': True,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'email': user.email
+        })
+    finally:
+        db_session.close()
+
+@app.route('/api/feedback/start', methods=['POST'])
+def start_feedback_session():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
+    session_id = str(uuid.uuid4())
+    feedback_sessions[session_id] = {
+        'user_id': user_id,
+        'start_time': datetime.utcnow(),
+        'transcript': [],
+        'status': 'active'
+    }
+    return jsonify({'session_id': session_id, 'status': 'started'})
+
+@app.route('/api/feedback/submit', methods=['POST'])
+def submit_feedback():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
+    data = request.json
+    session_db = SessionLocal()
+    try:
+        feedback = Feedback(
+            user_id=user_id,
+            content=data.get('content'),
+            rating=data.get('rating'),
+            feedback_type=data.get('feedback_type', 'general')
+        )
+        session_db.add(feedback)
+        session_db.commit()
+        return jsonify(feedback.to_dict())
+    except Exception as e:
+        session_db.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        session_db.close()
+
+@app.route('/api/feedback/history', methods=['GET'])
+def get_feedback_history():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
+    session_db = SessionLocal()
+    try:
+        feedbacks = session_db.query(Feedback).filter_by(user_id=user_id).order_by(Feedback.created_at.desc()).all()
+        return jsonify([feedback.to_dict() for feedback in feedbacks])
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        session_db.close()
+
+@app.route("/get_provider_transcript", methods=["GET"])
+def get_provider_transcript():
+    session = SessionLocal()
+    try:
+        token = request.args.get("token")
+        if not token:
+            return jsonify({"status": "error", "message": "Missing token"}), 400
+
+        # Get case_study_id from token
+        invite = session.query(InviteToken).filter_by(token=token).first()
+        if not invite:
+            return jsonify({"status": "error", "message": "Invalid token"}), 404
+
+        # Get the provider interview transcript
+        provider_interview = session.query(SolutionProviderInterview).filter_by(case_study_id=invite.case_study_id).first()
+        if not provider_interview or not provider_interview.transcript:
+            return jsonify({"status": "error", "message": "Provider transcript not found"}), 404
+
+        return jsonify({
+            "status": "success",
+            "transcript": provider_interview.transcript
+        })
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        session.close()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
