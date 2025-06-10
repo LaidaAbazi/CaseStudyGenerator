@@ -462,7 +462,7 @@ function handleMessage(event) {
         type: "session.update",
         session: {
           instructions: systemInstructions,
-          voice: "verse",
+          voice: "coral",
           modalities: ["audio", "text"],
           input_audio_transcription: { model: "whisper-1" },
           turn_detection: { type: "server_vad" },
@@ -698,7 +698,7 @@ startBtn.onclick = async () => {
     type: 'session.update',
     session: {
       instructions: systemInstructions,
-      voice: 'verse',
+      voice: 'coral',
       modalities: ['audio', 'text'],
       input_audio_transcription: { model: 'whisper-1' },
       turn_detection: { type: 'server_vad' },

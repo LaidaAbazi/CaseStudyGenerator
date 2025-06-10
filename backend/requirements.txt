@@ -11,3 +11,8 @@ Flask-WTF
 flask-cors
 langdetect==1.0.9
 flask-jwt-extended
+matplotlib==3.7.1
+plotly==5.18.0
+numpy==1.24.3
+pandas==2.0.3
+vaderSentiment==3.3.2

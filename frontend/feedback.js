@@ -299,7 +299,7 @@ async function initConnection() {
         type: "session.update",
         session: {
           instructions: getPersonalizedInstructions(),
-          voice: "verse",
+          voice: "coral",
           modalities: ["audio", "text"],
           input_audio_transcription: { model: "whisper-1" },
           turn_detection: { type: "server_vad" }

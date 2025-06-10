@@ -30,6 +30,7 @@ class CaseStudy(Base):
     title = Column(String(200))
     final_summary = Column(Text)       # Final aggregated summary for the whole case
     final_summary_pdf_path = Column(String(500))  # ✅ Add this line
+    meta_data_text = Column(Text, nullable=True)  # <-- Added for meta data storage
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

@@ -19,7 +19,7 @@ engine = create_engine(
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Create Base class
-Base = declarative_base()
+from models import Base
 
 def init_db():
     """Initialize the database by creating all tables."""

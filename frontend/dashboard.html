@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;500;400&display=swap" rel="stylesheet">
   <script src="feedback.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 
   <style>
     body {
@@ -433,6 +434,89 @@
     .feedback-item:last-child {
       border-bottom: none;
     }
+    .meta-data-btn {
+      background: none;
+      border: none;
+      color: #2563eb;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 8px;
+      margin-left: 12px;
+      transition: color 0.2s;
+    }
+    .meta-data-btn:hover {
+      color: #1d4ed8;
+    }
+    .meta-data-popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .meta-data-popup.hidden {
+      display: none;
+    }
+    .meta-data-content {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      width: 90%;
+      max-width: 800px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+    .meta-data-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .meta-data-header h3 {
+      margin: 0;
+      color: #1f2937;
+      font-size: 1.5rem;
+    }
+    .close-meta-data {
+      background: none;
+      border: none;
+      color: #6b7280;
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 4px;
+    }
+    .meta-section {
+      margin-bottom: 24px;
+    }
+    .meta-section h4 {
+      color: #374151;
+      margin: 0 0 12px 0;
+      font-size: 1.1rem;
+    }
+    .meta-section div {
+      color: #4b5563;
+      line-height: 1.5;
+    }
+    .visualization-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 16px;
+    }
+    .visualization-grid > div {
+      background: white;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
   </style>
 </head>
 <body>
@@ -466,6 +550,39 @@
     </div>
     <div class="main-content" id="mainContent">
       <div style="color:#888; font-size:1.1rem; text-align:center; margin-top:80px;">Select a story from the left to view details.</div>
+    </div>
+  </div>
+
+  <div class="meta-data-popup hidden">
+    <div class="meta-data-content">
+        <div class="meta-data-header">
+            <h3>Director's Cut Notes</h3>
+            <button class="close-meta-data"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="meta-data-sections">
+            <div class="meta-section">
+                <h4>Sentiment Analysis</h4>
+                <div class="visualization-grid">
+                    <div id="sentimentGauge"></div>
+                    <div id="emotionsRadar"></div>
+                    <div id="satisfactionChart"></div>
+                    <div id="metricsTimeline"></div>
+                    <div id="keyPointsChart"></div>
+                </div>
+            </div>
+            <div class="meta-section">
+                <h4>Key Takeaways</h4>
+                <div id="clientTakeaways"></div>
+            </div>
+            <div class="meta-section">
+                <h4>Discrepancies & Corrections</h4>
+                <div id="correctedConflicts"></div>
+            </div>
+            <div class="meta-section">
+                <h4>Additional Quotes</h4>
+                <div id="quoteHighlights"></div>
+            </div>
+        </div>
     </div>
   </div>
 
@@ -607,6 +724,12 @@
       const header = document.createElement('div');
       header.className = 'story-card-header';
       header.textContent = story.title || 'Untitled';
+      const metaDataBtn = document.createElement('button');
+      metaDataBtn.className = 'meta-data-btn';
+      metaDataBtn.innerHTML = '<i class="fas fa-lightbulb"></i>';
+      metaDataBtn.title = 'View Meta Data';
+      metaDataBtn.onclick = () => showMetaData(story);
+      header.appendChild(metaDataBtn);
       card.appendChild(header);
       // Add label input just under the title
       const editLabels = document.createElement('div');
@@ -698,10 +821,27 @@
           saveBtn.className = 'save-btn';
           saveBtn.textContent = 'Generate Final Story';
           saveBtn.onclick = async () => {
+            // Try to get textarea first (if you ever make it editable)
+            let summary = '';
+            const textarea = document.querySelector('#clientStoryTextarea') 
+              || document.querySelector('.client-story-textarea') 
+              || document.querySelector('textarea');
+            if (textarea) {
+              summary = textarea.value;
+            } else {
+              // Fallback: get the text from the read-only client story display
+              const clientSummaryText = document.querySelector('.client-summary-text');
+              if (clientSummaryText) {
+                summary = clientSummaryText.innerText || clientSummaryText.textContent;
+              } else {
+                alert("Client story text not found!");
+                return;
+              }
+            }
             const res = await fetch('/generate_full_case_study', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ case_study_id: story.id, final_summary: textarea.value })
+              body: JSON.stringify({ case_study_id: story.id, final_summary: summary })
             });
             const data = await res.json();
             if (data.status === 'success') {
@@ -750,10 +890,21 @@
           saveBtn.className = 'save-btn';
           saveBtn.textContent = 'Save Final Changes';
           saveBtn.onclick = async () => {
+            // Automatically select the correct textarea for the client story
+            // Adjust the selector if your textarea has a different id or class
+            const textarea = document.querySelector('#clientStoryTextarea') 
+              || document.querySelector('.client-story-textarea') 
+              || document.querySelector('textarea'); // fallback to first textarea if needed
+
+            if (!textarea) {
+              alert("Textarea not found!");
+              return;
+            }
+            const summary = textarea.value;
             const res = await fetch('/generate_full_case_study', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ case_study_id: story.id, final_summary: textarea.value })
+              body: JSON.stringify({ case_study_id: story.id, final_summary: summary })
             });
             const data = await res.json();
             if (data.status === 'success') {
@@ -785,6 +936,43 @@
       }
       renderTabContent();
       main.appendChild(card);
+
+      // Add the meta data popup container at the end of the card
+      const metaDataPopup = document.createElement('div');
+      metaDataPopup.className = 'meta-data-popup hidden';
+      metaDataPopup.innerHTML = `
+        <div class="meta-data-content">
+          <div class="meta-data-header">
+            <h3>Director's Cut Notes</h3>
+            <button class="close-meta-data"><i class="fas fa-times"></i></button>
+          </div>
+          <div class="meta-data-sections">
+            <div class="meta-section">
+              <h4>Sentiment Analysis</h4>
+              <div class="visualization-grid">
+                <div id="sentimentGauge"></div>
+                <div id="emotionsRadar"></div>
+                <div id="satisfactionChart"></div>
+                <div id="metricsTimeline"></div>
+                <div id="keyPointsChart"></div>
+              </div>
+            </div>
+            <div class="meta-section">
+              <h4>Key Takeaways</h4>
+              <div id="clientTakeaways"></div>
+            </div>
+            <div class="meta-section">
+              <h4>Discrepancies & Corrections</h4>
+              <div id="correctedConflicts"></div>
+            </div>
+            <div class="meta-section">
+              <h4>Additional Quotes</h4>
+              <div id="quoteHighlights"></div>
+            </div>
+          </div>
+        </div>
+      `;
+      card.appendChild(metaDataPopup);
     }
 
     async function fetchAndRender() {
@@ -813,6 +1001,76 @@
         menu.classList.add('hidden');
       }
     });
+
+    function showMetaData(story) {
+      const popup = document.querySelector('.meta-data-popup');
+      popup.classList.remove('hidden');
+      
+      let metaData = {};
+      try {
+        metaData = JSON.parse(story.meta_data_text || '{}');
+      } catch (e) {
+        console.error('Error parsing meta data:', e);
+      }
+
+      // --- Improved Sentiment Visualization & Label ---
+      if (metaData.sentiment?.visualizations?.sentiment_chart_img) {
+        const sentiment = metaData.sentiment.overall_sentiment;
+        let emoji = '😐', color = '#fbbf24';
+        if (sentiment.sentiment === 'positive') { emoji = '😊'; color = '#22c55e'; }
+        if (sentiment.sentiment === 'negative') { emoji = '😞'; color = '#ef4444'; }
+        document.getElementById('sentimentGauge').innerHTML = `
+          <div style="text-align:center;">
+            <img src="${metaData.sentiment.visualizations.sentiment_chart_img}" alt="Sentiment Chart" style="max-width:100%; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08);"><br>
+            <span style="font-size:1.2em; font-weight:bold; color:${color};">
+              ${emoji} ${sentiment.sentiment.charAt(0).toUpperCase() + sentiment.sentiment.slice(1)}
+              <span style="font-size:0.95em; color:#64748b;">(${sentiment.score}/10, Confidence: ${(sentiment.confidence*100).toFixed(0)}%)</span>
+            </span>
+            ${metaData.sentiment.satisfaction?.statement && metaData.sentiment.satisfaction.statement !== "No explicit satisfaction statement found."
+              ? `<div style="margin-top:8px; color:#334155; font-style:italic;">
+                  <span style="font-weight:600;">Client said:</span> “${metaData.sentiment.satisfaction.statement}”
+                </div>`
+              : ''
+            }
+          </div>
+        `;
+      }
+
+      // --- Improved Additional Quotes Display ---
+      const quoteHighlights = metaData.quote_highlights || '';
+      if (quoteHighlights && quoteHighlights.trim() !== '-') {
+        // Split only on newlines that start a new quote (e.g., - " or - **)
+        const quotes = quoteHighlights.split(/\n(?=- )/).filter(q => q.trim().length > 0);
+        document.getElementById('quoteHighlights').innerHTML = quotes.map(q =>
+          `<blockquote style="margin: 0 0 12px 0; padding: 10px 16px; background: #f3f4f6; border-left: 4px solid #6366f1; border-radius: 6px; font-style: italic; color: #334155;">
+            ${q.trim().replace(/^[-\s]+/, '').replace(/^["“"]+|["""]+$/g, '')}
+          </blockquote>`
+        ).join('');
+      } else {
+        document.getElementById('quoteHighlights').innerHTML = '<span style="color:#9ca3af;">No additional quotes available.</span>';
+      }
+
+      // --- Existing code for other sections ---
+      document.getElementById('clientTakeaways').innerHTML = metaData.client_takeaways || 'No key takeaways available.';
+      document.getElementById('correctedConflicts').innerHTML = metaData.corrected_conflicts || 'No discrepancies found.';
+
+      // Close button handler
+      const closeBtn = popup.querySelector('.close-meta-data');
+      closeBtn.onclick = () => popup.classList.add('hidden');
+      
+      // Close on outside click
+      popup.onclick = (e) => {
+        if (e.target === popup) {
+          popup.classList.add('hidden');
+        }
+      };
+
+      // --- New code for sentiment gauge ---
+      if (metaData.sentiment?.visualizations?.client_satisfaction_gauge) {
+        document.getElementById('sentimentGauge').innerHTML = '';
+        Plotly.newPlot('sentimentGauge', JSON.parse(metaData.sentiment.visualizations.client_satisfaction_gauge));
+      }
+    }
   </script>
 </body>
 </html> 

@@ -229,4 +229,69 @@ body {
 
 #startBtn, #endBtn {
   margin-top: 32px !important;
+}
+
+.visualization-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 16px;
+}
+
+.visualization-grid > div {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.meta-data-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.meta-data-content {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    width: 1200px;
+}
+
+.meta-data-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.meta-section {
+    margin-bottom: 32px;
+}
+
+.meta-section h4 {
+    color: #1e40af;
+    margin-bottom: 16px;
+}
+
+/* Add this to your CSS for beautiful blockquotes in meta data */
+.meta-section blockquote {
+  margin: 0 0 12px 0;
+  padding: 10px 16px;
+  background: #f3f4f6;
+  border-left: 4px solid #6366f1;
+  border-radius: 6px;
+  font-style: italic;
+  color: #334155;
+  font-size: 1.05em;
 } 

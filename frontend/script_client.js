@@ -190,7 +190,7 @@ async function initConnection(clientInstructions, clientGreeting) {
           type: "session.update",
           session: {
             instructions: clientInstructions,
-            voice: "verse",
+            voice: "coral",
             modalities: ["audio", "text"],
             input_audio_transcription: { model: "whisper-1" },
             turn_detection: { type: "server_vad" }
@@ -320,7 +320,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   - Let the conversation breathe. Never rush.
   
   [2. OPENER WITH REFERENCE TO ${provider_name}]
-  - Say naturally: "Earlier I had a chat with ${provider_interviewee_name || provider_name} from ${provider_name}…" — use the actual name of the person interviewed from the provider's team.
+  - Say naturally: "Earlier I had a chat with ${provider_interviewee_name} from ${provider_name}…" — use the actual name of the person interviewed from the provider's team.
   - This should sound like a friendly continuation of a previous conversation.
   - Make the tone conversational and slightly warm. You can add something like: "They shared a really thoughtful version of the story, and now I'd love to hear your side."
   - Reference your recent conversation with ${provider_name}. Make it personal and relatable (e.g., "I recently spoke with ${provider_interviewee_name || provider_name} from ${provider_name} about the project you worked on together…").

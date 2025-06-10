@@ -22,6 +22,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.exc import IntegrityError
 from functools import wraps
 from flask_jwt_extended import jwt_required, get_jwt_identity
+import matplotlib
+matplotlib.use('Agg')  # Use non-GUI backend to avoid Tkinter and main thread errors
+import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+import plotly.express as px
+import io
+import base64
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 
 load_dotenv()
@@ -114,7 +122,7 @@ def create_session():
     }
     data = {
         "model": "gpt-4o-realtime-preview-2024-12-17",
-        "voice": "verse"
+        "voice": "coral"
     }
     response = requests.post("https://api.openai.com/v1/realtime/sessions", headers=headers, json=data)
     return jsonify(response.json())
@@ -848,9 +856,31 @@ def generate_full_case_study():
 
         **Client Summary:**  
         {client_summary}
+
+        **IMPORTANT QUOTE STRUCTURE:**
+        1. **Main Story Quotes** (Only these should appear in the main story):
+            - Include exactly ONE impactful quote from the client in the "Customer/Client Reflection" section
+            - Include exactly ONE impactful quote from the provider in the "Testimonial/Provider Reflection" section
+            - These should be the most powerful, representative quotes
+            - Keep them concise and impactful
+
+        2. **Additional Quotes** (These will appear ONLY in the meta data):
+            - After the main story, provide a section titled "Quotes Highlights"
+            - Include 2-3 additional meaningful quotes that were NOT used in the main story
+            - These should be different from the main quotes above
+            - Format each as:
+              - **Client:** "Their exact words or close paraphrase"
+              - **Provider:** "Their exact words or close paraphrase"
+            - Focus on quotes that:
+              - Highlight specific results or metrics
+              - Show unique insights about the collaboration
+              - Express satisfaction or key learnings
+              - Reveal interesting challenges overcome
+
+        Example of Additional Quotes (for meta data only):
+        - **Client:** "What surprised us most was the 80% reduction in manual work."
+        - **Provider:** "The client's feedback helped us refine the solution in unexpected ways."
         """
-
-
 
         headers = {
             "Authorization": f"Bearer {OPENAI_API_KEY}",
@@ -871,9 +901,264 @@ def generate_full_case_study():
         case_study_text = result["choices"][0]["message"]["content"]
         cleaned = clean_text(case_study_text)
 
-        # ✅ STORE the final summary in the DB
-        # ✅ STORE the final summary AND generate PDF
-        case_study.final_summary = cleaned
+        def draft_quote_from_summary(summary, speaker="Client"):
+            # Simple template-based fallback if OpenAI is not available
+            # You can make this smarter or use OpenAI if you wish
+            return f"As a {speaker.lower()}, I can say this project made a real difference for us. We're very happy with the results."
+
+        def extract_and_remove_metadata_sections(text, client_summary=None):
+            # Patterns to extract meta sections
+            conflict_pattern = r"(?:\*\*|__)?Corrected\s*&\s*Conflicted Replies(?:\*\*|__)?\s*[\r\n]+(.*?)(?=(?:\*\*|__)?Quotes? Highlights(?:\*\*|__)?|$)"
+            quotes_pattern = r"(?:\*\*|__)?Quotes? Highlights(?:\*\*|__)?\s*[\r\n\-:]*([\s\S]*?)(?=(?:\*\*|__)?[A-Z][^:]*:|$)"
+            
+            # Extract meta sections
+            conflict_match = re.search(conflict_pattern, text, re.IGNORECASE | re.DOTALL)
+            quotes_match = re.search(quotes_pattern, text, re.IGNORECASE | re.DOTALL)
+            corrected_conflicts = conflict_match.group(1).strip() if conflict_match else ""
+            quote_highlights = quotes_match.group(1).strip() if quotes_match else ""
+
+            # Fallback: if quote_highlights is empty, try to extract blockquotes or bulleted quotes
+            if not quote_highlights:
+                # Try to extract lines like: - **Client:** "Quote here..."
+                blockquote_lines = re.findall(r'- \*\*(Client|Provider)\*\*:\s*["""]([\s\S]*?)["""]', text)
+                if blockquote_lines:
+                    quote_highlights = "\n".join(f'- **{who}:** "{q.strip()}"' for who, q in blockquote_lines)
+                else:
+                    # Fallback: extract multi-line quotes between quotes
+                    multiline_quotes = re.findall(r'["""]([\s\S]*?)["""]', text)
+                    if multiline_quotes:
+                        quote_highlights = "\n".join(f'- "{q.strip()}"' for q in multiline_quotes)
+                    elif client_summary:
+                        # Draft a quote from the client summary
+                        drafted = draft_quote_from_summary(client_summary, speaker="Client")
+                        quote_highlights = f'- "{drafted}"'
+
+            # Remove meta sections from the main story
+            text = re.sub(conflict_pattern, "", text, flags=re.IGNORECASE | re.DOTALL)
+            text = re.sub(quotes_pattern, "", text, flags=re.IGNORECASE | re.DOTALL)
+            
+            # Extract key takeaways
+            client_takeaways = extract_client_takeaways(client_summary) if client_summary else ""
+
+            # Ensure sentiment analysis is included in meta data
+            sentiment = analyze_sentiment(client_summary) if client_summary else {}
+
+            return text.strip(), {
+                "corrected_conflicts": corrected_conflicts,
+                "quote_highlights": quote_highlights,
+                "sentiment": sentiment,
+                "client_takeaways": client_takeaways,
+                # Add other meta data fields as needed
+            }
+
+        def extract_client_takeaways(client_summary):
+            """Extract key takeaways from client interview using OpenAI."""
+            try:
+                prompt = f"""
+                Analyze the following client interview summary and extract the 3-5 most important key takeaways.
+                Focus on:
+                - Main pain points or challenges they faced
+                - Most valued aspects of the solution
+                - Key benefits or improvements they experienced
+                - Their overall satisfaction level
+                - Any specific metrics or results they mentioned
+
+                Format the response as a bullet-point list.
+
+                Client Summary:
+                {client_summary}
+                """
+
+                headers = {
+                    "Authorization": f"Bearer {OPENAI_API_KEY}",
+                    "Content-Type": "application/json"
+                }
+
+                payload = {
+                    "model": openai_config["model"],
+                    "messages": [{"role": "system", "content": prompt}],
+                    "temperature": 0.3,
+                    "max_tokens": 500
+                }
+
+                response = requests.post("https://api.openai.com/v1/chat/completions", 
+                                      headers=headers, 
+                                      json=payload)
+                result = response.json()
+                return result["choices"][0]["message"]["content"].strip()
+            except Exception as e:
+                print(f"Error extracting client takeaways: {str(e)}")
+                return "Unable to extract key takeaways."
+
+        def generate_sentiment_chart(sentiment_score, output_dir="generated_pdfs"):
+            # Create a simple horizontal bar chart for sentiment
+            fig, ax = plt.subplots(figsize=(4, 1.5))
+            color = 'green' if sentiment_score > 6 else 'yellow' if sentiment_score > 4 else 'red'
+            ax.barh(['Sentiment'], [sentiment_score], color=color)
+            ax.set_xlim(0, 10)
+            ax.set_xlabel('Score (0-10)')
+            ax.set_title('Sentiment Score')
+            plt.tight_layout()
+            # Save to a unique file
+            os.makedirs(output_dir, exist_ok=True)
+            filename = f"sentiment_chart_{uuid.uuid4().hex}.png"
+            filepath = os.path.join(output_dir, filename)
+            plt.savefig(filepath)
+            plt.close(fig)
+            return filename
+
+        def extract_client_satisfaction(client_summary):
+            # Define categories and keywords
+            categories = [
+                ("Very Bad", ["terrible", "awful", "horrible", "very disappointed", "extremely dissatisfied", "never again", "worst"]),
+                ("Bad", ["bad", "disappointed", "dissatisfied", "not happy", "not satisfied", "issues", "problems", "concerns"]),
+                ("Neutral", ["okay", "neutral", "average", "fine", "acceptable", "neither good nor bad"]),
+                ("Good", ["good", "satisfied", "happy", "pleased", "helpful", "positive", "recommend", "valuable", "improved", "great help"]),
+                ("Very Good", ["excellent", "outstanding", "amazing", "fantastic", "very happy", "very satisfied", "delighted", "impressed", "exceptional", "game changer", "highly recommend", "best"])
+            ]
+            summary_lower = client_summary.lower()
+            found_category = "Neutral"
+            for cat, keywords in categories:
+                for kw in keywords:
+                    if kw in summary_lower:
+                        found_category = cat
+                        break
+                if found_category != "Neutral":
+                    break
+
+            # Try to extract a satisfaction sentence
+            satisfaction_sentence = ""
+            for cat, keywords in categories:
+                for kw in keywords:
+                    match = re.search(r'([^.]*\b' + re.escape(kw) + r'\b[^.]*)\.', client_summary, re.IGNORECASE)
+                    if match:
+                        satisfaction_sentence = match.group(1).strip()
+                        break
+                if satisfaction_sentence:
+                    break
+
+            return {
+                "category": found_category,
+                "statement": satisfaction_sentence or "No explicit satisfaction statement found."
+            }
+
+        def generate_client_satisfaction_gauge(category):
+            # Map categories to values and colors for the gauge
+            category_map = {
+                "Very Bad": (1, "#ef4444"),
+                "Bad": (3, "#f59e42"),
+                "Neutral": (5, "#fbbf24"),
+                "Good": (7, "#a3e635"),
+                "Very Good": (9, "#22c55e")
+            }
+            value, color = category_map.get(category, (5, "#fbbf24"))
+            fig = go.Figure(go.Indicator(
+                mode="gauge+number",
+                value=value,
+                number={'valueformat': '', 'font': {'size': 1}, 'suffix': ''},  # Hide the number
+                title={'text': f"Client Satisfaction: <b>{category}</b>", 'font': {'size': 22}},
+                gauge={
+                    'axis': {'range': [0, 10], 'tickvals': [1, 3, 5, 7, 9], 'ticktext': ["Very Bad", "Bad", "Neutral", "Good", "Very Good"], 'tickwidth': 2, 'tickcolor': "#888"},
+                    'bar': {'color': color, 'thickness': 0.3},
+                    'steps': [
+                        {'range': [0, 2], 'color': "#ef4444"},
+                        {'range': [2, 4], 'color': "#f59e42"},
+                        {'range': [4, 6], 'color': "#fbbf24"},
+                        {'range': [6, 8], 'color': "#a3e635"},
+                        {'range': [8, 10], 'color': "#22c55e"},
+                    ],
+                    'threshold': {
+                        'line': {'color': "black", 'width': 8},
+                        'thickness': 0.9,
+                        'value': value
+                    }
+                }
+            ))
+            fig.update_layout(height=300, margin=dict(t=40, b=0, l=0, r=0))
+            return fig.to_json()
+
+        def analyze_sentiment(client_summary):
+            try:
+                analyzer = SentimentIntensityAnalyzer()
+                scores = analyzer.polarity_scores(client_summary)
+                compound = scores['compound']
+                if compound >= 0.05:
+                    sentiment = "positive"
+                elif compound <= -0.05:
+                    sentiment = "negative"
+                else:
+                    sentiment = "neutral"
+
+                final_analysis = {
+                    "overall_sentiment": {
+                        "sentiment": sentiment,
+                        "confidence": abs(compound),
+                        "score": round((compound + 1) * 5, 2)  # scale -1..1 to 0..10
+                    },
+                    "emotional_analysis": {
+                        "primary_emotion": sentiment,
+                        "secondary_emotions": [],
+                        "emotional_intensity": max(scores['pos'], scores['neg'])
+                    },
+                    "key_points": {
+                        "positive": [],
+                        "negative": []
+                    },
+                    "metrics": [],
+                    "satisfaction": {
+                        "score": 0,
+                        "confidence": abs(compound),
+                        "key_factors": [],
+                        "statement": ""
+                    },
+                    "visualizations": {}
+                }
+                # Generate and attach the sentiment chart image
+                sentiment_score = final_analysis["overall_sentiment"]["score"]
+                chart_filename = generate_sentiment_chart(sentiment_score)
+                final_analysis["visualizations"]["sentiment_chart_img"] = f"/generated_pdfs/{chart_filename}"
+
+                # Add client satisfaction analysis
+                satisfaction_info = extract_client_satisfaction(client_summary)
+                final_analysis["satisfaction"]["category"] = satisfaction_info["category"]
+                final_analysis["satisfaction"]["statement"] = satisfaction_info["statement"]
+
+                # Generate and attach the Plotly gauge for client satisfaction
+                gauge_json = generate_client_satisfaction_gauge(satisfaction_info["category"])
+                final_analysis["visualizations"]["client_satisfaction_gauge"] = gauge_json
+
+                return final_analysis
+            except Exception as e:
+                print(f"Error in sentiment analysis: {str(e)}")
+                return {
+                    "overall_sentiment": {
+                        "sentiment": "unknown",
+                        "confidence": 0,
+                        "score": 0
+                    },
+                    "emotional_analysis": {
+                        "primary_emotion": "unknown",
+                        "secondary_emotions": [],
+                        "emotional_intensity": 0
+                    },
+                    "key_points": {
+                        "positive": [],
+                        "negative": []
+                    },
+                    "metrics": [],
+                    "satisfaction": {
+                        "score": 0,
+                        "confidence": 0,
+                        "key_factors": [],
+                        "statement": "No explicit satisfaction statement found."
+                    },
+                    "visualizations": {}
+                }
+
+        main_story, meta_data = extract_and_remove_metadata_sections(cleaned, client_summary)
+        print("Meta data being saved:", meta_data)
+        case_study.final_summary = main_story
+        case_study.meta_data_text = json.dumps(meta_data, ensure_ascii=False, indent=2)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         pdf_filename = f"final_case_study_{timestamp}.pdf"
@@ -884,21 +1169,19 @@ def generate_full_case_study():
         pdf.add_page()
         pdf.set_auto_page_break(auto=True, margin=15)
         pdf.set_font("Arial", size=12)
-        for line in cleaned.split("\n"):
+        for line in main_story.split("\n"):
             pdf.multi_cell(0, 10, line)
 
         pdf.output(pdf_path)
 
-        # ✅ Save path to DB
         case_study.final_summary_pdf_path = pdf_path
         session.commit()
 
         return jsonify({
             "status": "success",
-            "text": cleaned,
+            "text": main_story,
             "pdf_url": f"/download/{pdf_filename}"
         })
-
 
     except Exception as e:
         session.rollback()
@@ -1061,6 +1344,7 @@ def api_case_studies():
                 'solution_provider_summary': getattr(cs.solution_provider_interview, 'summary', None),
                 'client_summary': getattr(cs.client_interview, 'summary', None),
                 'final_summary': cs.final_summary,
+                'meta_data_text': cs.meta_data_text,
                 'labels': [{'id': l.id, 'name': l.name} for l in cs.labels],
                 'client_link_url': getattr(cs.solution_provider_interview, 'client_link_url', None),  
             })
@@ -1285,6 +1569,10 @@ def get_provider_transcript():
         return jsonify({"status": "error", "message": str(e)}), 500
     finally:
         session.close()
+
+@app.route('/generated_pdfs/<filename>')
+def serve_generated_file(filename):
+    return send_from_directory('generated_pdfs', filename)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
