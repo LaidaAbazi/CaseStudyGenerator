@@ -517,6 +517,61 @@
       padding: 16px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
+    .video-container {
+      margin: 20px 0;
+      padding: 20px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .video-status {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 6px;
+      background: #f8f9fa;
+      text-align: center;
+    }
+    .generate-video-btn {
+      background: linear-gradient(90deg, #06B6D4 0%, #0891b2 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 1.08rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 2px 8px rgba(6, 182, 212, 0.15);
+    }
+    .generate-video-btn:hover {
+      background: linear-gradient(90deg, #0891b2 0%, #06B6D4 100%);
+      box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+    }
+    .generate-video-btn:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .download-video-btn {
+      background: #10b981;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      transition: all 0.2s;
+      margin-top: 10px;
+    }
+    .download-video-btn:hover {
+      background: #059669;
+    }
   </style>
 </head>
 <body>
@@ -604,6 +659,8 @@
     let allLabels = [];
     let selectedStoryId = null;
     let labelFilter = null;
+    let currentVideoId = null;
+    let videoStatusCheckInterval = null;
 
     async function fetchUser() {
       const res = await fetch('/api/user');
@@ -624,12 +681,31 @@
     }
 
     async function fetchStories() {
-      let url = '/api/case_studies';
-      if (labelFilter) url += '?label=' + labelFilter;
-      const res = await fetch(url);
-      if (res.status === 401) { window.location.href = 'login.html'; return; }
-      const data = await res.json();
-      if (data.success) allStories = data.case_studies;
+      try {
+        let url = '/api/case_studies';
+        if (labelFilter) url += '?label=' + labelFilter;
+        const res = await fetch(url);
+        if (res.status === 401) { 
+          window.location.href = 'login.html'; 
+          return; 
+        }
+        const data = await res.json();
+        if (data.success) {
+          // Update allStories with fresh data from server
+          allStories = data.case_studies;
+          
+          // If we have a selected story, make sure its data is up to date
+          if (selectedStoryId) {
+            const updatedStory = allStories.find(s => s.id === selectedStoryId);
+            if (updatedStory) {
+              // Re-render the main content to show updated video
+              renderMainContent();
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching stories:', error);
+      }
     }
 
     function renderLabelDropdownMenu() {
@@ -691,7 +767,12 @@
       filtered.forEach(story => {
         const item = document.createElement('div');
         item.className = 'story-item' + (story.id === selectedStoryId ? ' selected' : '');
-        item.onclick = () => { selectedStoryId = story.id; renderMainContent(); renderStories(); };
+        item.onclick = async () => { 
+          selectedStoryId = story.id; 
+          // Fetch fresh data before rendering
+          await fetchStories();
+          renderStories(); 
+        };
         const title = document.createElement('div');
         title.className = 'story-title';
         title.textContent = story.title || 'Untitled';
@@ -785,8 +866,9 @@
       tabContent.className = 'tab-content';
       card.appendChild(tabContent);
       function renderTabContent() {
-        if (activeTab === 0) tabContent.textContent = story.solution_provider_summary || 'No summary yet.';
-        else if (activeTab === 1) {
+        if (activeTab === 0) {
+          tabContent.textContent = story.solution_provider_summary || 'No summary yet.';
+        } else if (activeTab === 1) {
           tabContent.innerHTML = '';
           const clientSummary = story.client_summary || '';
           const clientLink = story.client_link_url || '';
@@ -797,7 +879,6 @@
           clientSummaryText.textContent = clientSummary;
           clientSummaryRow.appendChild(clientSummaryText);
           if (!clientSummary && clientLink) {
-            // Only show the link if there is no summary
             const linkSpan = document.createElement('span');
             linkSpan.className = 'client-summary-text';
             linkSpan.textContent = clientLink;
@@ -812,66 +893,7 @@
             clientSummaryRow.appendChild(copyBtn);
           }
           tabContent.appendChild(clientSummaryRow);
-          // Inline button container
-          const btnRow = document.createElement('div');
-          btnRow.style.display = 'flex';
-          btnRow.style.gap = '16px';
-          btnRow.style.marginTop = '18px';
-          const saveBtn = document.createElement('button');
-          saveBtn.className = 'save-btn';
-          saveBtn.textContent = 'Generate Final Story';
-          saveBtn.onclick = async () => {
-            // Try to get textarea first (if you ever make it editable)
-            let summary = '';
-            const textarea = document.querySelector('#clientStoryTextarea') 
-              || document.querySelector('.client-story-textarea') 
-              || document.querySelector('textarea');
-            if (textarea) {
-              summary = textarea.value;
-            } else {
-              // Fallback: get the text from the read-only client story display
-              const clientSummaryText = document.querySelector('.client-summary-text');
-              if (clientSummaryText) {
-                summary = clientSummaryText.innerText || clientSummaryText.textContent;
-              } else {
-                alert("Client story text not found!");
-                return;
-              }
-            }
-            const res = await fetch('/generate_full_case_study', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ case_study_id: story.id, final_summary: summary })
-            });
-            const data = await res.json();
-            if (data.status === 'success') {
-              alert('Final story saved!');
-              await fetchAndRender();
-            } else {
-              alert('Failed to save: ' + data.message);
-            }
-          };
-          btnRow.appendChild(saveBtn);
-          // Download PDF button
-          if (story.final_summary_pdf_path || story.final_summary) {
-            const downloadBtn = document.createElement('button');
-            downloadBtn.className = 'pdf-btn';
-            downloadBtn.textContent = 'Download PDF';
-            downloadBtn.onclick = async () => {
-              const res = await fetch(`/download_full_summary_pdf?case_study_id=${story.id}`);
-              const data = await res.json();
-              if (data.status === 'success' && data.pdf_url) {
-                window.open(data.pdf_url, '_blank');
-              } else {
-                alert('PDF not available yet.');
-              }
-            };
-            btnRow.appendChild(downloadBtn);
-          }
-          tabContent.appendChild(btnRow);
-        }
-        else {
-          // Editable final summary
+        } else if (activeTab === 2) {
           tabContent.innerHTML = '';
           const textarea = document.createElement('textarea');
           textarea.style.width = '100%';
@@ -881,26 +903,135 @@
           textarea.style.fontSize = '1rem';
           textarea.value = story.final_summary || '';
           tabContent.appendChild(textarea);
-          // Inline button container
+
+          // LinkedIn post section
+          const linkedinSection = document.createElement('div');
+          linkedinSection.style.marginTop = '24px';
+          linkedinSection.style.padding = '16px';
+          linkedinSection.style.borderRadius = '10px';
+          linkedinSection.style.backgroundColor = '#f8fafc';
+          linkedinSection.style.border = '1px solid #e2e8f0';
+
+          const linkedinHeader = document.createElement('h3');
+          linkedinHeader.textContent = 'LinkedIn Post';
+          linkedinHeader.style.marginBottom = '12px';
+          linkedinHeader.style.color = '#1e293b';
+          linkedinSection.appendChild(linkedinHeader);
+
+          const linkedinContent = document.createElement('div');
+          linkedinContent.style.marginBottom = '16px';
+          linkedinContent.style.padding = '12px';
+          linkedinContent.style.backgroundColor = '#fff';
+          linkedinContent.style.borderRadius = '8px';
+          linkedinContent.style.border = '1px solid #e2e8f0';
+          linkedinContent.style.whiteSpace = 'pre-wrap';
+          linkedinContent.textContent = story.linkedin_post || 'No LinkedIn post generated yet.';
+          linkedinSection.appendChild(linkedinContent);
+
+          const linkedinBtn = document.createElement('button');
+          linkedinBtn.className = 'linkedin-btn';
+          linkedinBtn.textContent = 'Generate LinkedIn Post';
+          linkedinBtn.style.background = 'linear-gradient(90deg, #0077B5 0%, #00A0DC 100%)';
+          linkedinBtn.style.color = '#fff';
+          linkedinBtn.style.border = 'none';
+          linkedinBtn.style.borderRadius = '10px';
+          linkedinBtn.style.padding = '12px 24px';
+          linkedinBtn.style.fontSize = '1rem';
+          linkedinBtn.style.fontWeight = '600';
+          linkedinBtn.style.cursor = 'pointer';
+          linkedinBtn.style.transition = 'all 0.2s';
+          linkedinBtn.style.boxShadow = '0 2px 8px rgba(0, 119, 181, 0.15)';
+
+          linkedinBtn.onclick = async () => {
+            linkedinBtn.disabled = true;
+            linkedinBtn.textContent = 'Generating...';
+            try {
+              const res = await fetch('/generate_linkedin_post', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ case_study_id: story.id })
+              });
+              const data = await res.json();
+              if (data.status === 'success') {
+                linkedinContent.textContent = data.linkedin_post;
+                alert('LinkedIn post generated successfully!');
+              } else {
+                alert('Failed to generate LinkedIn post: ' + data.message);
+              }
+            } catch (error) {
+              alert('Error generating LinkedIn post: ' + error.message);
+            } finally {
+              linkedinBtn.disabled = false;
+              linkedinBtn.textContent = 'Generate LinkedIn Post';
+            }
+          };
+          linkedinSection.appendChild(linkedinBtn);
+          tabContent.appendChild(linkedinSection);
+
+          // --- VIDEO SECTION ---
+          const videoSection = document.createElement('div');
+          videoSection.className = 'video-section';
+          videoSection.style.marginTop = '20px';
+
+          // Debug log to verify video_url is coming from DB
+          console.log('Rendering story:', story);
+          console.log('Video URL for this story:', story.video_url);
+
+          if (story.video_url) {
+            // Show the video if it exists
+            const videoContainer = document.createElement('div');
+            videoContainer.className = 'video-container';
+
+            const videoElement = document.createElement('iframe');
+            videoElement.style.width = '100%';
+            videoElement.style.height = '450px';
+            videoElement.style.border = 'none';
+            videoElement.allowFullscreen = true;
+            videoElement.src = story.video_url;
+
+            videoContainer.appendChild(videoElement);
+            videoSection.appendChild(videoContainer);
+          } else if (story.video_id && story.video_status) {
+            // Show video status if video is being generated
+            const videoContainer = document.createElement('div');
+            videoContainer.className = 'video-container';
+            videoContainer.id = `videoContainer-${story.id}`;
+
+            const videoStatus = document.createElement('div');
+            videoStatus.className = 'video-status';
+            videoStatus.id = `videoStatus-${story.id}`;
+            videoStatus.textContent = `Video is ${story.video_status}...`;
+
+            videoContainer.appendChild(videoStatus);
+            videoSection.appendChild(videoContainer);
+
+            // Start checking video status if it's still processing
+            if (story.video_status === 'processing' || story.video_status === 'pending') {
+              startVideoStatusCheck(story.video_id, story.id);
+            }
+          } else {
+            // Show the generate button if no video exists
+            const videoBtn = document.createElement('button');
+            videoBtn.className = 'action-btn generate-video-btn';
+            videoBtn.id = `videoBtn-${story.id}`;
+            videoBtn.innerHTML = '<i class="fas fa-video"></i> Generate Video';
+            videoBtn.onclick = () => generateVideo(story.id);
+            videoSection.appendChild(videoBtn);
+          }
+
+          tabContent.appendChild(videoSection);
+
+          // --- BUTTON ROW (Save/Download PDF) ---
           const btnRow = document.createElement('div');
           btnRow.style.display = 'flex';
           btnRow.style.gap = '16px';
           btnRow.style.marginTop = '18px';
+
           const saveBtn = document.createElement('button');
           saveBtn.className = 'save-btn';
           saveBtn.textContent = 'Save Final Changes';
           saveBtn.onclick = async () => {
-            // Automatically select the correct textarea for the client story
-            // Adjust the selector if your textarea has a different id or class
-            const textarea = document.querySelector('#clientStoryTextarea') 
-              || document.querySelector('.client-story-textarea') 
-              || document.querySelector('textarea'); // fallback to first textarea if needed
-
-            if (!textarea) {
-              alert("Textarea not found!");
-              return;
-            }
-            const summary = textarea.value;
+            const summary = tabContent.querySelector('textarea').value;
             const res = await fetch('/generate_full_case_study', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -915,7 +1046,7 @@
             }
           };
           btnRow.appendChild(saveBtn);
-          // Download PDF button
+
           if (story.final_summary_pdf_path || story.final_summary) {
             const downloadBtn = document.createElement('button');
             downloadBtn.className = 'pdf-btn';
@@ -931,6 +1062,7 @@
             };
             btnRow.appendChild(downloadBtn);
           }
+
           tabContent.appendChild(btnRow);
         }
       }
@@ -973,6 +1105,67 @@
         </div>
       `;
       card.appendChild(metaDataPopup);
+
+      // Update the styles
+      const style = document.createElement('style');
+      style.textContent = `
+        .generate-video-btn {
+            background: linear-gradient(90deg, #06B6D4 0%, #0891b2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 1.08rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(6, 182, 212, 0.15);
+        }
+        .generate-video-btn:hover {
+            background: linear-gradient(90deg, #0891b2 0%, #06B6D4 100%);
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+        }
+        .generate-video-btn:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .video-container {
+            margin: 20px 0;
+            padding: 20px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .video-status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 6px;
+            background: #f8f9fa;
+            text-align: center;
+        }
+        .download-video-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+        .download-video-btn:hover {
+            background: #059669;
+        }
+      `;
+      document.head.appendChild(style);
     }
 
     async function fetchAndRender() {
@@ -1028,7 +1221,7 @@
             </span>
             ${metaData.sentiment.satisfaction?.statement && metaData.sentiment.satisfaction.statement !== "No explicit satisfaction statement found."
               ? `<div style="margin-top:8px; color:#334155; font-style:italic;">
-                  <span style="font-weight:600;">Client said:</span> “${metaData.sentiment.satisfaction.statement}”
+                  <span style="font-weight:600;">Client said:</span> " ${metaData.sentiment.satisfaction.statement} "
                 </div>`
               : ''
             }
@@ -1043,7 +1236,7 @@
         const quotes = quoteHighlights.split(/\n(?=- )/).filter(q => q.trim().length > 0);
         document.getElementById('quoteHighlights').innerHTML = quotes.map(q =>
           `<blockquote style="margin: 0 0 12px 0; padding: 10px 16px; background: #f3f4f6; border-left: 4px solid #6366f1; border-radius: 6px; font-style: italic; color: #334155;">
-            ${q.trim().replace(/^[-\s]+/, '').replace(/^["“"]+|["""]+$/g, '')}
+            ${q.trim().replace(/^[-\s]+/, '').replace(/^["""]+$/g, '')}
           </blockquote>`
         ).join('');
       } else {
@@ -1069,6 +1262,178 @@
       if (metaData.sentiment?.visualizations?.client_satisfaction_gauge) {
         document.getElementById('sentimentGauge').innerHTML = '';
         Plotly.newPlot('sentimentGauge', JSON.parse(metaData.sentiment.visualizations.client_satisfaction_gauge));
+      }
+    }
+
+    async function generateVideo(storyId) {
+      try {
+        const story = allStories.find(s => s.id === storyId);
+        if (!story) {
+          console.error('Story not found:', storyId);
+          return;
+        }
+
+        // Check if video already exists
+        if (story.video_url || story.video_id) {
+          alert('A video has already been generated for this story.');
+          return;
+        }
+
+        // Ensure required elements exist or create them
+        let videoContainer = document.getElementById(`videoContainer-${storyId}`);
+        let videoStatus = document.getElementById(`videoStatus-${storyId}`);
+        let videoElement = document.getElementById(`storyVideo-${storyId}`);
+        const videoBtn = document.getElementById(`videoBtn-${storyId}`);
+
+        // If elements don't exist, create and append them
+        if (!videoContainer) {
+          videoContainer = document.createElement('div');
+          videoContainer.id = `videoContainer-${storyId}`;
+          videoContainer.className = 'video-container';
+          // Find the video section for this story and append
+          if (videoBtn && videoBtn.parentElement) {
+            videoBtn.parentElement.appendChild(videoContainer);
+          } else {
+            // fallback: append to main content
+            document.getElementById('mainContent').appendChild(videoContainer);
+          }
+        }
+        if (!videoElement) {
+          videoElement = document.createElement('iframe');
+          videoElement.id = `storyVideo-${storyId}`;
+          videoElement.style.width = '100%';
+          videoElement.style.height = '450px';
+          videoElement.style.border = 'none';
+          videoElement.allowFullscreen = true;
+          videoContainer.appendChild(videoElement);
+        }
+        if (!videoStatus) {
+          videoStatus = document.createElement('div');
+          videoStatus.id = `videoStatus-${storyId}`;
+          videoStatus.className = 'video-status';
+          videoContainer.appendChild(videoStatus);
+        }
+
+        // Hide generate button and show video container
+        if (videoBtn) videoBtn.style.display = 'none';
+        videoContainer.style.display = 'block';
+        videoStatus.textContent = 'Starting video generation...';
+        
+        const downloadBtn = videoContainer.querySelector('.download-video-btn');
+        if (downloadBtn) downloadBtn.style.display = 'none';
+
+        const response = await fetch('/api/generate_video', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ case_study_id: storyId })
+        });
+
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+          if (data.video_id) {
+            videoStatus.textContent = 'Video is being generated...';
+            startVideoStatusCheck(data.video_id, storyId);
+          } else {
+            videoStatus.textContent = 'Error: Video generation started but no video ID received';
+            if (videoBtn) videoBtn.style.display = 'block';
+            videoContainer.style.display = 'none';
+          }
+        } else {
+          videoStatus.textContent = `Error: ${data.error || 'Failed to generate video'}`;
+          if (videoBtn) videoBtn.style.display = 'block';
+          videoContainer.style.display = 'none';
+        }
+      } catch (error) {
+        console.error('Error generating video:', error);
+        const videoStatus = document.getElementById(`videoStatus-${storyId}`);
+        const videoBtn = document.getElementById(`videoBtn-${storyId}`);
+        const videoContainer = document.getElementById(`videoContainer-${storyId}`);
+        
+        if (videoStatus) {
+          videoStatus.textContent = `Error: ${error.message}`;
+        }
+        if (videoBtn) {
+          videoBtn.style.display = 'block';
+        }
+        if (videoContainer) {
+          videoContainer.style.display = 'none';
+        }
+      }
+    }
+
+    function startVideoStatusCheck(videoId, storyId) {
+      const videoContainer = document.getElementById(`videoContainer-${storyId}`);
+      const videoElement = document.getElementById(`storyVideo-${storyId}`);
+      const videoStatus = document.getElementById(`videoStatus-${storyId}`);
+      const videoBtn = document.getElementById(`videoBtn-${storyId}`);
+      const downloadBtn = videoContainer.querySelector('.download-video-btn');
+      
+      if (!videoContainer || !videoElement || !videoStatus) return;
+      
+      videoContainer.style.display = 'block';
+      videoStatus.textContent = 'Checking video status...';
+      
+      let checkCount = 0;
+      const maxChecks = 60; // 5 minutes maximum (5 seconds * 60)
+      
+      const checkStatus = async () => {
+        try {
+          const response = await fetch(`/api/video_status/${videoId}`);
+          const data = await response.json();
+          
+          if (data.status === 'completed' && data.video_url) {
+            videoElement.src = data.video_url;
+            videoElement.style.display = 'block';
+            videoStatus.textContent = 'Video is ready!';
+            if (downloadBtn) downloadBtn.style.display = 'block';
+            if (videoBtn) videoBtn.style.display = 'none';
+            
+            // Update the story in allStories array
+            const storyIndex = allStories.findIndex(s => s.id === storyId);
+            if (storyIndex !== -1) {
+              allStories[storyIndex].video_url = data.video_url;
+              allStories[storyIndex].video_id = videoId;
+            }
+            
+            return;
+          } else if (data.status === 'failed') {
+            videoStatus.textContent = `Video generation failed: ${data.message || 'Unknown error'}`;
+            if (videoBtn) videoBtn.style.display = 'block';
+            return;
+          } else if (data.status === 'processing' || data.status === 'pending') {
+            videoStatus.textContent = 'Video is being generated...';
+            checkCount++;
+            if (checkCount < maxChecks) {
+              setTimeout(checkStatus, 5000);
+            } else {
+              videoStatus.textContent = 'Video generation is taking longer than expected. Please try again later.';
+              if (videoBtn) videoBtn.style.display = 'block';
+            }
+          } else {
+            videoStatus.textContent = `Video status: ${data.status}`;
+            checkCount++;
+            if (checkCount < maxChecks) {
+              setTimeout(checkStatus, 5000);
+            } else {
+              videoStatus.textContent = 'Video generation timeout. Please try again.';
+              if (videoBtn) videoBtn.style.display = 'block';
+            }
+          }
+        } catch (error) {
+          console.error('Error checking video status:', error);
+          videoStatus.textContent = 'Error checking video status. Please try again.';
+          if (videoBtn) videoBtn.style.display = 'block';
+        }
+      };
+      
+      checkStatus();
+    }
+
+    function downloadVideo(storyId) {
+      const videoElement = document.getElementById(`storyVideo-${storyId}`);
+      if (videoElement && videoElement.src) {
+        window.open(videoElement.src, '_blank');
       }
     }
   </script>

@@ -31,8 +31,15 @@ class CaseStudy(Base):
     final_summary = Column(Text)       # Final aggregated summary for the whole case
     final_summary_pdf_path = Column(String(500))  # ✅ Add this line
     meta_data_text = Column(Text, nullable=True)  # <-- Added for meta data storage
+    linkedin_post = Column(Text, nullable=True)  # Store the generated LinkedIn post
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    # HeyGen video fields
+    video_id = Column(String(100), nullable=True)  # Store HeyGen video ID
+    video_url = Column(Text, nullable=True)  # Store video URL
+    video_status = Column(String(50), nullable=True)  # Store video generation status
+    video_created_at = Column(DateTime(timezone=True), nullable=True)  # When video was created
 
     user = relationship('User', back_populates='case_studies')
     solution_provider_interview = relationship('SolutionProviderInterview', uselist=False, back_populates='case_study')

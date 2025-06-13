@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, send_from_directory, request, send_file, session
 import requests
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC  # Add UTC import
 from dotenv import load_dotenv
 from fpdf import FPDF
 import re
@@ -30,14 +30,25 @@ import plotly.express as px
 import io
 import base64
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from flask_migrate import Migrate
+
 
 
 load_dotenv()
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 
+# Base URL configuration
+BASE_URL = os.getenv("BASE_URL", "http://127.0.0.1:10000")
+
 # JWT configuration
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "dev_jwt_secret")  # Use a strong secret in production!
 app.config["JWT_TOKEN_LOCATION"] = ["headers"]  # Tell Flask-JWT-Extended to look for JWTs in headers
+
+# HeyGen API configuration
+HEYGEN_API_KEY = os.getenv("HEYGEN_API_KEY")
+HEYGEN_API_BASE_URL = "https://api.heygen.com/v2"
+HEYGEN_AVATAR_ID = "Juan_standing_office_front"
+HEYGEN_VOICE_ID = "1edc5e7338eb4e37b26dc8eb3f9b7e9c"  # Your specified voice ID
 
 init_db()
 
@@ -749,9 +760,10 @@ def generate_full_case_study():
         - If the Client provided information that contradicts, corrects, or expands on the Provider's version, **create a special section titled "Corrected & Conflicted Replies"**. In this section, briefly and clearly list the key areas where the Client said something different, added, corrected, or removed a point. This should be a concise summary (bullets or short sentences) so the provider can easily see what changed.
         - In the main story, **merge and synthesize all available details and insights** from both the Solution Provider and Client summaries: background, challenges, solutions, process, collaboration, data, quotes, and results. Do not repeat information—combine and paraphrase to build a seamless narrative.
         - **Quotes:**  
-            - Whenever you are prompted to include a quote (from either side), do so.
-            - Additionally, act as an expert quote-finder: review both full interviews and *proactively* identify 2–3 additional, meaningful, and positive quotes from anywhere in the transcripts—especially those that reveal key insights, excitement, or real value—even if they were not explicitly provided as "quotes". This ensures the best soundbites aren't missed.
-            - Quote both the provider and client if possible, using their actual words when available.
+            - Include exactly ONE impactful quote from the client in the "Customer/Client Reflection" section
+            - Include exactly ONE impactful quote from the provider in the "Testimonial/Provider Reflection" section
+            - These should be the most powerful, representative quotes
+            - Keep them concise and impactful
         - Write in clear, engaging business English. Use a mix of paragraphs, bold section headers, and bullet points.
         - Include real numbers, testimonials, collaboration stories, and unique project details whenever possible.
         - Start with a punchy title and bold hero statement summarizing the main impact.
@@ -820,15 +832,7 @@ def generate_full_case_study():
             - "Client removed/clarified certain benefits."
             - This is a quick-reference "diff" so the provider can see at a glance where their and the client's stories differ or align.
 
-        13. **Quotes Highlights**
-            - At the end, provide a section listing 2–3 of the most impactful, positive, and contextually relevant quotes found anywhere in either interview transcript (even if not submitted as a "quote").  
-            - Label the quotes with who said them.  
-            - Example:  
-            - **Provider:** "What surprised us most was the speed of adoption."  
-            - **Client:** "I finally got real-time data I could actually use."  
-            - Only include direct words or close paraphrases.
-
-        14. **Call to Action**
+        13. **Call to Action**
             - Friendly invitation to book a meeting, see a demo, or contact for partnership.
             - Include links or contact info if available.
 
@@ -1345,8 +1349,13 @@ def api_case_studies():
                 'client_summary': getattr(cs.client_interview, 'summary', None),
                 'final_summary': cs.final_summary,
                 'meta_data_text': cs.meta_data_text,
+                'linkedin_post': cs.linkedin_post,
                 'labels': [{'id': l.id, 'name': l.name} for l in cs.labels],
                 'client_link_url': getattr(cs.solution_provider_interview, 'client_link_url', None),  
+                'video_url': cs.video_url,
+                'video_id': cs.video_id,
+                'video_status': cs.video_status,
+                'video_created_at': cs.video_created_at.isoformat() if cs.video_created_at else None,
             })
         return jsonify({'success': True, 'case_studies': result})
     finally:
@@ -1573,6 +1582,374 @@ def get_provider_transcript():
 @app.route('/generated_pdfs/<filename>')
 def serve_generated_file(filename):
     return send_from_directory('generated_pdfs', filename)
+
+def generate_linkedin_post(case_study_text):
+    """Generate a LinkedIn post from a case study using AI."""
+    prompt = f"""
+    You are writing a highly engaging LinkedIn post as the *solution provider* (e.g., tech company, agency, freelancer) who successfully delivered the project described below.
+
+    Craft a LinkedIn post that:
+
+    * Begins with a powerful hook: a thought-provoking question, intriguing fact, surprising insight, or bold statement that immediately grabs attention.
+    * Clearly and concisely frames the specific challenge or problem your client was facing in relatable, human language.
+    * Describes how your team approached this challenge, highlighting your unique methodology, collaboration process, or innovative thinking in a grounded, authentic way.
+    * Shares specific measurable outcomes or meaningful feedback from your client (quantitative metrics like percentages, time saved, costs reduced, or qualitative insights like direct quotes or observed benefits).
+    * Reflects genuine pride and insight into why this project mattered, showcasing real value without hype or sales clichés.
+    * Includes a short, authentic quote from your client or your project lead if available, making the story more credible and engaging.
+    * Ends with a thoughtful reflection or an engaging, open-ended question designed to spark conversation or encourage readers to share similar experiences or insights.
+    * Uses a confident yet relatable tone: professional but human, insightful but not overly polished—like a respected founder or lead reflecting thoughtfully on a successful project.
+    * Includes 3–5 targeted hashtags relevant to your industry or project focus (e.g., #DigitalTransformation, #AI, #CustomerSuccess, #Innovation, #TechLeadership).
+    * Keeps the total length concise yet substantial, between 1000–1300 characters (including hashtags).
+
+    Avoid jargon, buzzwords, or generic statements. Aim for clarity, authenticity, and storytelling excellence.
+
+    Case Study:
+    {case_study_text}
+
+    LinkedIn Post:
+    """
+
+
+    headers = {
+        "Authorization": f"Bearer {OPENAI_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "model": "gpt-4",
+        "messages": [{"role": "system", "content": prompt}],
+        "temperature": 0.7,
+        "max_tokens": 500
+    }
+
+    response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+    result = response.json()
+    return result["choices"][0]["message"]["content"]
+
+@app.route("/generate_linkedin_post", methods=["POST"])
+def generate_linkedin_post_endpoint():
+    session = SessionLocal()
+    try:
+        data = request.get_json()
+        case_study_id = data.get("case_study_id")
+
+        if not case_study_id:
+            return jsonify({"status": "error", "message": "Missing case_study_id"}), 400
+
+        case_study = session.query(CaseStudy).filter_by(id=case_study_id).first()
+        if not case_study:
+            return jsonify({"status": "error", "message": "Case study not found"}), 404
+
+        if not case_study.final_summary:
+            return jsonify({"status": "error", "message": "No final summary available"}), 400
+
+        # Generate LinkedIn post
+        linkedin_post = generate_linkedin_post(case_study.final_summary)
+        
+        # Save to database
+        case_study.linkedin_post = linkedin_post
+        session.commit()
+
+        return jsonify({
+            "status": "success",
+            "linkedin_post": linkedin_post
+        })
+
+    except Exception as e:
+        session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        session.close()
+
+def generate_heygen_input_text(final_summary):
+    """Generate optimized input text for HeyGen video using OpenAI."""
+    try:
+        prompt = f"""You are creating a script for a professional video presentation using an AI avatar. Your task is to transform this case study into an engaging, conversational script that will be delivered by an AI avatar.
+
+IMPORTANT REQUIREMENTS:
+- Maximum 1300 characters (strict limit)
+- Natural, conversational tone that sounds human
+- Clear, professional delivery style
+- Focus on the most impactful parts of the story
+- Include specific metrics and results
+- Break into natural speaking patterns
+- Avoid complex jargon or technical terms
+- Keep sentences concise and easy to follow
+
+SCRIPT STRUCTURE:
+1. Opening Hook (1-2 sentences)
+   - Grab attention with the most impressive result or achievement
+   - Set the context briefly
+
+2. Main Story (3-4 sentences)
+   - Explain the challenge/problem
+   - Describe the solution
+   - Highlight key implementation details
+   - Share specific results and metrics
+
+3. Closing Impact (1-2 sentences)
+   - Reinforce the main achievement
+   - End with a memorable takeaway
+
+TONE AND STYLE:
+- Professional but warm and engaging
+- Confident but not salesy
+- Clear and direct
+- Natural pauses for the avatar to breathe
+- Avoid complex sentence structures
+- Use active voice
+- Include transition phrases for smooth delivery
+
+Case Study Summary:
+{final_summary}
+
+Please format the response as a single, flowing paragraph optimized for video narration. Remember to stay within 1300 characters."""
+
+        headers = {
+            "Authorization": f"Bearer {OPENAI_API_KEY}",
+            "Content-Type": "application/json"
+        }
+
+        payload = {
+            "model": openai_config["model"],
+            "messages": [
+                {"role": "system", "content": "You are a professional video script writer who specializes in creating engaging, conversational scripts for AI avatar presentations. Your scripts are known for being clear, impactful, and perfectly timed for avatar delivery."},
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.7,
+            "max_tokens": 500
+        }
+
+        response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+        result = response.json()
+        script = result["choices"][0]["message"]["content"].strip()
+        
+        # Ensure the script doesn't exceed 1300 characters
+        if len(script) > 1300:
+            script = script[:1297] + "..."
+            
+        return script
+    except Exception as e:
+        print(f"Error generating HeyGen input text: {str(e)}")
+        return None
+
+@app.route("/api/generate_video", methods=["POST"])
+def generate_video():
+    session_db = SessionLocal()
+    try:
+        data = request.get_json()
+        case_study_id = data.get('case_study_id')
+        
+        if not case_study_id:
+            return jsonify({"error": "Case study ID is required"}), 400
+            
+        case_study = session_db.query(CaseStudy).filter_by(id=case_study_id).first()
+        if not case_study:
+            return jsonify({"error": "Case study not found"}), 404
+            
+        if not case_study.final_summary:
+            return jsonify({"error": "Final summary is required for video generation"}), 400
+
+        # Prevent multiple video generations for the same case study
+        if case_study.video_id:
+            return jsonify({"error": "A video has already been generated for this case study."}), 400
+
+        # Generate optimized input text for HeyGen
+        input_text = generate_heygen_input_text(case_study.final_summary)
+        if not input_text:
+            return jsonify({"error": "Failed to generate optimized input text"}), 500
+
+        # Prepare the request to HeyGen API V2
+        headers = {
+            "accept": "application/json",
+            "content-type": "application/json",
+            "x-api-key": HEYGEN_API_KEY
+        }
+        
+        payload = {
+            "caption": False,
+            "dimension": {
+                "width": 1280,
+                "height": 720
+            },
+            "video_inputs": [
+                {
+                    "character": {
+                        "type": "avatar",
+                        "avatar_id": HEYGEN_AVATAR_ID,
+                        "scale": 1.0,
+                        "avatar_style": "normal",
+                        "offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        }
+                    },
+                    "voice": {
+                        "type": "text",
+                        "voice_id": HEYGEN_VOICE_ID,
+                        "input_text": input_text,
+                        "speed": 1.0,
+                        "pitch": 0
+                    },
+                    "background": {
+                        "type": "color",
+                        "value": "#f6f6fc"
+                    }
+                }
+            ]
+        }
+
+        print("Sending request to HeyGen API...")
+        response = requests.post(
+            f"{HEYGEN_API_BASE_URL}/video/generate",
+            headers=headers,
+            json=payload
+        )
+
+        print(f"HeyGen API response status: {response.status_code}")
+        print(f"HeyGen API response: {response.text}")
+
+        if response.status_code == 200:
+            video_data = response.json()
+            video_id = video_data.get('data', {}).get('video_id')
+            
+            if not video_id:
+                print("No video_id in response:", video_data)
+                return jsonify({
+                    "status": "error",
+                    "error": "No video ID received from HeyGen API"
+                }), 500
+            
+            # Update case study with video information
+            case_study.video_id = video_id
+            case_study.video_status = 'processing'
+            case_study.video_created_at = datetime.now(UTC)  # Use timezone-aware datetime
+            session_db.commit()
+            print(f"Saved video_id {video_id} to case study {case_study.id}")
+            
+            return jsonify({
+                "status": "success",
+                "video_id": video_id,
+                "message": "Video generation started"
+            })
+        else:
+            error_message = f"HeyGen API error: {response.text}"
+            print(error_message)
+            return jsonify({
+                "status": "error",
+                "error": error_message
+            }), response.status_code
+
+    except Exception as e:
+        session_db.rollback()
+        print(f"Error in generate_video: {str(e)}")
+        return jsonify({"status": "error", "error": str(e)}), 500
+    finally:
+        session_db.close()
+
+@app.route("/api/video_status/<video_id>", methods=["GET"])
+def check_video_status(video_id):
+    if not video_id:
+        return jsonify({"error": "Video ID is required"}), 400
+        
+    try:
+        headers = {
+            "accept": "application/json",
+            "x-api-key": HEYGEN_API_KEY
+        }
+        
+        print(f"Checking status for video ID: {video_id}")
+        # Use the correct v1 endpoint for status check
+        response = requests.get(
+            f"https://api.heygen.com/v1/video_status.get",
+            headers=headers,
+            params={"video_id": video_id}
+        )
+        
+        print(f"HeyGen API response status: {response.status_code}")
+        print(f"HeyGen API response: {response.text}")
+        
+        if response.status_code == 404:
+            print("HeyGen video not ready yet (404).")
+            return jsonify({"status": "not_ready", "message": "Video not ready yet"}), 200
+        
+        if response.status_code != 200:
+            error_msg = f"HeyGen API error: {response.text}"
+            print(error_msg)
+            return jsonify({"error": error_msg}), 500
+            
+        video_data = response.json()
+        print(f"HeyGen video status response: {video_data}")
+        
+        # Update case study with video status and URL if completed
+        session_db = SessionLocal()
+        try:
+            # Print all video IDs in DB for debugging
+            all_ids = [cs.video_id for cs in session_db.query(CaseStudy).all()]
+            print("All video IDs in DB:", all_ids)
+            case_study = session_db.query(CaseStudy).filter_by(video_id=video_id).first()
+            
+            if case_study:
+                # The status is in the data object
+                status = video_data.get("data", {}).get("status")
+                print(f"Video status from API: {status}")
+                case_study.video_status = status
+                
+                if status == "completed":
+                    # Get the video URL from the API response
+                    video_url = video_data.get("data", {}).get("video_url")
+                    print(f"Video URL from API: {video_url}")
+                    
+                    if video_url:
+                        case_study.video_url = video_url
+                        session_db.commit()
+                        print(f"Video URL saved to database: {case_study.video_url}")
+                        return jsonify({
+                            "status": "completed",
+                            "video_url": video_url
+                        })
+                    else:
+                        print("Video completed but no URL in response")
+                        return jsonify({
+                            "status": "completed",
+                            "message": "Video completed but URL not available yet"
+                        })
+                elif status == "failed":
+                    error = video_data.get("data", {}).get("error")
+                    return jsonify({
+                        "status": "failed",
+                        "message": f"Video generation failed: {error}" if error else "Video generation failed"
+                    })
+                elif status in ["processing", "pending"]:
+                    return jsonify({
+                        "status": status,
+                        "message": "Video is being processed"
+                    })
+                else:
+                    # For any other status, return it as is
+                    return jsonify({
+                        "status": status,
+                        "message": f"Video is {status}"
+                    })
+                
+                session_db.commit()
+            
+            print(f"No case study found for video ID: {video_id}")
+            return jsonify(video_data)
+            
+        except Exception as db_error:
+            session_db.rollback()
+            print(f"Database error: {str(db_error)}")
+            return jsonify({"error": "Database error occurred"}), 500
+        finally:
+            session_db.close()
+            
+    except requests.RequestException as e:
+        print(f"Request error: {str(e)}")
+        return jsonify({"error": f"Failed to connect to HeyGen API: {str(e)}"}), 500
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
