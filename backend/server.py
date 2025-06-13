@@ -37,9 +37,6 @@ from flask_migrate import Migrate
 load_dotenv()
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 
-# Base URL configuration
-BASE_URL = os.getenv("BASE_URL", "http://127.0.0.1:10000")
-
 # JWT configuration
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "dev_jwt_secret")  # Use a strong secret in production!
 app.config["JWT_TOKEN_LOCATION"] = ["headers"]  # Tell Flask-JWT-Extended to look for JWTs in headers
